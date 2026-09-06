@@ -1,0 +1,35 @@
+name: Validar Backend (CI)
+
+on:
+  push:
+    branches: [ "main", "test", "develop" ]
+  pull_request:
+    branches: [ "main", "test", "develop" ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pruebas:
+    name: Pruebas y compilación
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+        
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Compilar y correr Pruebas
+        run: mvn clean test
