@@ -18,7 +18,7 @@ jobs:
     name: Pruebas y compilación
     runs-on: ubuntu-latest
     
-    # 1. Agregamos un servicio temporal de PostgreSQL
+    #Agregamos un servicio temporal de PostgreSQL
     services:
       postgres:
         image: postgres:15
