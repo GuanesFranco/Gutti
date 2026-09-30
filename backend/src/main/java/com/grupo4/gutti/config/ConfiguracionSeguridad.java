@@ -52,6 +52,8 @@ public class ConfiguracionSeguridad {
                         "/swagger-ui/**",
                         "/swagger-ui.html"
                 ).permitAll()
+                // Gestión de pedidos: solo administradores
+                .requestMatchers("/api/v1/pedidos/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Modo Stateless (JWT)
