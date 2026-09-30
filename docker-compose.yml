@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Contenedor de la Base de Datos PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: gutti_db_container
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "123456"
+      POSTGRES_DB: gutti_db
+    volumes:
+      - gutti_db_data:/var/lib/postgresql/data
+    networks:
+      - gutti_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gutti -d gutti_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Contenedor del Backend Spring Boot
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gutti_backend_container
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD="123456"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - gutti_network
+
+volumes:
+  gutti_db_data:
+
+networks:
+  gutti_network:
+    driver: bridge
