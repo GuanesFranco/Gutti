@@ -9,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import com.grupo4.gutti.enums.EstadoPedido;
 import com.grupo4.gutti.enums.TipoDeEntrega;
+import com.grupo4.gutti.exceptions.OperacionNoPermitidaException;
 
 @Entity
 @Table(name = "pedidos")
@@ -83,6 +84,14 @@ public class Pedido {
     }
 
     /**
+     * Devuelve al stock todos los productos del pedido y vacía la lista de ítems.
+     */
+    public void quitarItemsReponiendoStock() {
+        items.forEach(item -> item.getProducto().reponerStock(item.getCantidad()));
+        items.clear();
+    }
+
+    /**
      * @return cantidad total de unidades del pedido
      */
     public int sumarItems() {
@@ -94,6 +103,22 @@ public class Pedido {
      */
     public Double calcularCostoTotal() {
         return items.stream().mapToDouble(ItemPedido::calcularSubtotal).sum();
+    }
+
+    /**
+     * @return true si el pedido ya fue entregado
+     */
+    public boolean estaEntregado() {
+        return estado == EstadoPedido.ENTREGADO;
+    }
+
+    /**
+     * @throws OperacionNoPermitidaException si el pedido ya fue entregado
+     */
+    public void validarQueSePuedeModificar() {
+        if (estaEntregado()) {
+            throw new OperacionNoPermitidaException("No se puede modificar un pedido ya entregado.");
+        }
     }
 
 }
