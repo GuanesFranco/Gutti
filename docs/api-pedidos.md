@@ -10,6 +10,8 @@ y enviarlo en el header `Authorization: Bearer <token>`. También se pueden prob
 | Método | Ruta | Historia de usuario | Respuesta |
 |---|---|---|---|
 | POST | `/api/v1/pedidos` | Registrar pedidos | 201 + pedido con total |
+| GET | `/api/v1/pedidos?tipoDeEntrega=&desde=&hasta=` | Consultar pedidos | 200 + historial y recaudación |
+| GET | `/api/v1/pedidos/{id}` | Consultar pedidos | 200 + detalle del pedido |
 
 ### Registrar pedido
 ```json
@@ -30,10 +32,22 @@ POST /api/v1/pedidos
 - Sin productos → **400** "El pedido debe tener al menos un producto".
 - Cantidad mayor al stock → **409** "Stock insuficiente para el producto ...". No se registra nada.
 
+### Consultar pedidos (historial)
+`GET /api/v1/pedidos?tipoDeEntrega=MOSTRADOR&desde=2026-10-01&hasta=2026-10-05`
+(todos los filtros son opcionales; las fechas son `AAAA-MM-DD` e incluyen el día `hasta` completo).
+```json
+{
+  "pedidos": [ { "id": 1, "estado": "PENDIENTE", "total": 10800.0, "items": [ ... ] } ],
+  "recaudacionTotal": 10800.0,
+  "mensaje": null
+}
+```
+Si no hay resultados: `"pedidos": []` y `"mensaje": "No se encontraron pedidos"`.
+
 ## Códigos de error
 | Código | Cuándo |
 |---|---|
 | 400 | Datos inválidos (validaciones) |
 | 401/403 | Sin token o usuario sin rol ADMIN |
-| 404 | Producto inexistente |
+| 404 | Pedido o producto inexistente |
 | 409 | Stock insuficiente |

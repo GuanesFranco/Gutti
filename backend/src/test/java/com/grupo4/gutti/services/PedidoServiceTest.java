@@ -10,6 +10,7 @@ package com.grupo4.gutti.services;
 import com.grupo4.gutti.dtos.pedido.*;
 import com.grupo4.gutti.enums.EstadoPedido;
 import com.grupo4.gutti.enums.TipoDeEntrega;
+import com.grupo4.gutti.exceptions.RecursoNoEncontradoException;
 import com.grupo4.gutti.exceptions.StockInsuficienteException;
 import com.grupo4.gutti.models.Pedido;
 import com.grupo4.gutti.models.Producto;
@@ -25,7 +26,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -158,10 +163,74 @@ class PedidoServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("Consultar pedidos")
+    class Consultar {
+
+        @Test
+        @DisplayName("lista las ventas con su estado, su total y la recaudación total")
+        @SuppressWarnings("unchecked")
+        void listaVentasConRecaudacion() {
+            Pedido p1 = pedidoCon(EstadoPedido.PENDIENTE, pizza, 2);
+            Pedido p2 = pedidoCon(EstadoPedido.ENTREGADO, empanada, 5);
+            when(pedidoRepository.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of(p1, p2));
+
+            HistorialPedidosDTO historial = pedidoService.consultar(TipoDeEntrega.MOSTRADOR, null, null);
+
+            assertThat(historial.getPedidos()).hasSize(2);
+            assertThat(historial.getPedidos()).extracting(PedidoRespuestaDTO::getEstado)
+                    .containsExactly(EstadoPedido.PENDIENTE, EstadoPedido.ENTREGADO);
+            assertThat(historial.getRecaudacionTotal()).isEqualTo(2 * 5000.0 + 5 * 800.0);
+            assertThat(historial.getMensaje()).isNull();
+        }
+
+        @Test
+        @DisplayName("sin resultados devuelve la lista vacía y el mensaje 'No se encontraron pedidos'")
+        @SuppressWarnings("unchecked")
+        void sinResultados() {
+            when(pedidoRepository.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of());
+
+            HistorialPedidosDTO historial = pedidoService.consultar(null,
+                    LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 5));
+
+            assertThat(historial.getPedidos()).isEmpty();
+            assertThat(historial.getRecaudacionTotal()).isZero();
+            assertThat(historial.getMensaje()).isEqualTo("No se encontraron pedidos");
+        }
+
+        @Test
+        @DisplayName("rechaza un rango de fechas invertido")
+        void rangoInvalido() {
+            assertThatThrownBy(() -> pedidoService.consultar(null,
+                    LocalDate.of(2026, 10, 5), LocalDate.of(2026, 10, 1)))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        @DisplayName("informa si el pedido consultado no existe")
+        void pedidoInexistente() {
+            when(pedidoRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> pedidoService.obtenerPorId(99L))
+                    .isInstanceOf(RecursoNoEncontradoException.class);
+        }
+    }
+
     private static Producto producto(Long id, String nombre, double precio, int stock) {
         return Producto.builder()
                 .id(id).nombre(nombre).categoria("Comidas").precio(precio).stock(stock).estadoActivo(true)
                 .build();
     }
 
+    private Pedido pedidoCon(EstadoPedido estado, Producto producto, int cantidad) {
+        Pedido pedido = Pedido.builder()
+                .id(1L)
+                .fechaHora(LocalDateTime.now())
+                .estado(estado)
+                .tipoDeEntrega(TipoDeEntrega.MOSTRADOR)
+                .usuario(admin)
+                .build();
+        pedido.agregarItem(producto, cantidad);
+        return pedido;
+    }
 }
