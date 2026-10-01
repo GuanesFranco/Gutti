@@ -12,6 +12,9 @@ y enviarlo en el header `Authorization: Bearer <token>`. También se pueden prob
 | POST | `/api/v1/pedidos` | Registrar pedidos | 201 + pedido con total |
 | GET | `/api/v1/pedidos?tipoDeEntrega=&desde=&hasta=` | Consultar pedidos | 200 + historial y recaudación |
 | GET | `/api/v1/pedidos/{id}` | Consultar pedidos | 200 + detalle del pedido |
+| PUT | `/api/v1/pedidos/{id}` | Modificar pedidos | 200 + pedido con total recalculado |
+| PATCH | `/api/v1/pedidos/{id}/estado` | Modificar pedidos | 200 |
+| DELETE | `/api/v1/pedidos/{id}` | Eliminar pedidos | 204 |
 
 ### Registrar pedido
 ```json
@@ -44,10 +47,21 @@ POST /api/v1/pedidos
 ```
 Si no hay resultados: `"pedidos": []` y `"mensaje": "No se encontraron pedidos"`.
 
+### Modificar pedido
+- `PUT /api/v1/pedidos/{id}` con el mismo formato que el registro: reemplaza datos de entrega y productos,
+  repone el stock anterior, descuenta el nuevo y recalcula el total.
+  Cantidad 0 o negativa → **400** "Ingrese una cantidad válida (mayor a cero)".
+  Un pedido `ENTREGADO` no se puede modificar → **409**.
+- `PATCH /api/v1/pedidos/{id}/estado` con `{ "estado": "ENTREGADO" }`.
+
+### Eliminar pedido
+`DELETE /api/v1/pedidos/{id}` → repone el stock; al no existir más, deja de sumar en la recaudación.
+Si está entregado → **409** "No se puede eliminar un pedido ya entregado."
+
 ## Códigos de error
 | Código | Cuándo |
 |---|---|
 | 400 | Datos inválidos (validaciones) |
 | 401/403 | Sin token o usuario sin rol ADMIN |
 | 404 | Pedido o producto inexistente |
-| 409 | Stock insuficiente |
+| 409 | Stock insuficiente o pedido ya entregado |

@@ -10,6 +10,7 @@ package com.grupo4.gutti.services;
 import com.grupo4.gutti.dtos.pedido.*;
 import com.grupo4.gutti.enums.EstadoPedido;
 import com.grupo4.gutti.enums.TipoDeEntrega;
+import com.grupo4.gutti.exceptions.OperacionNoPermitidaException;
 import com.grupo4.gutti.exceptions.RecursoNoEncontradoException;
 import com.grupo4.gutti.exceptions.StockInsuficienteException;
 import com.grupo4.gutti.models.Pedido;
@@ -212,6 +213,110 @@ class PedidoServiceTest {
             when(pedidoRepository.findById(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> pedidoService.obtenerPorId(99L))
+                    .isInstanceOf(RecursoNoEncontradoException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("Modificar pedido")
+    class Modificar {
+
+        @Test
+        @DisplayName("reemplaza los productos, ajusta el stock y recalcula el total")
+        void modificaItemsYRecalculaTotal() {
+            Pedido pedido = pedidoCon(EstadoPedido.PENDIENTE, pizza, 2);
+            when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+            when(productoRepository.findById(1L)).thenReturn(Optional.of(pizza));
+            when(productoRepository.findById(2L)).thenReturn(Optional.of(empanada));
+            when(pedidoRepository.save(any(Pedido.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            ModificarPedidoDTO dto = new ModificarPedidoDTO(TipoDeEntrega.MOSTRADOR, "Juan", null, null,
+                    List.of(new ItemPedidoDTO(1L, 1), new ItemPedidoDTO(2L, 3)));
+
+            PedidoRespuestaDTO respuesta = pedidoService.modificar(1L, dto);
+
+            assertThat(respuesta.getTotal()).isEqualTo(5000.0 + 3 * 800.0);
+            assertThat(pizza.getStock()).isEqualTo(9);
+            assertThat(empanada.getStock()).isEqualTo(21);
+        }
+
+        @Test
+        @DisplayName("cambia el estado de PENDIENTE a ENTREGADO")
+        void cambiaEstado() {
+            Pedido pedido = pedidoCon(EstadoPedido.PENDIENTE, pizza, 1);
+            when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+            when(pedidoRepository.save(any(Pedido.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            PedidoRespuestaDTO respuesta = pedidoService.cambiarEstado(1L, EstadoPedido.ENTREGADO);
+
+            assertThat(respuesta.getEstado()).isEqualTo(EstadoPedido.ENTREGADO);
+        }
+
+        @Test
+        @DisplayName("no permite modificar los productos de un pedido entregado")
+        void noModificaPedidoEntregado() {
+            Pedido pedido = pedidoCon(EstadoPedido.ENTREGADO, pizza, 1);
+            when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+
+            ModificarPedidoDTO dto = new ModificarPedidoDTO(TipoDeEntrega.MOSTRADOR, null, null, null,
+                    List.of(new ItemPedidoDTO(1L, 1)));
+
+            assertThatThrownBy(() -> pedidoService.modificar(1L, dto))
+                    .isInstanceOf(OperacionNoPermitidaException.class);
+            verify(pedidoRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("si el nuevo producto no tiene stock no se guarda la modificación")
+        void noModificaSinStock() {
+            Pedido pedido = pedidoCon(EstadoPedido.PENDIENTE, pizza, 2);
+            when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+            when(productoRepository.findById(2L)).thenReturn(Optional.of(empanada));
+
+            ModificarPedidoDTO dto = new ModificarPedidoDTO(TipoDeEntrega.MOSTRADOR, null, null, null,
+                    List.of(new ItemPedidoDTO(2L, 100)));
+
+            assertThatThrownBy(() -> pedidoService.modificar(1L, dto))
+                    .isInstanceOf(StockInsuficienteException.class);
+            verify(pedidoRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("Eliminar pedido")
+    class Eliminar {
+
+        @Test
+        @DisplayName("elimina el pedido y repone el stock")
+        void eliminaYReponeStock() {
+            Pedido pedido = pedidoCon(EstadoPedido.PENDIENTE, pizza, 3);
+            when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+
+            pedidoService.eliminar(1L);
+
+            assertThat(pizza.getStock()).isEqualTo(10);
+            verify(pedidoRepository).delete(pedido);
+        }
+
+        @Test
+        @DisplayName("no permite eliminar un pedido ya entregado")
+        void noEliminaPedidoEntregado() {
+            Pedido pedido = pedidoCon(EstadoPedido.ENTREGADO, pizza, 3);
+            when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+
+            assertThatThrownBy(() -> pedidoService.eliminar(1L))
+                    .isInstanceOf(OperacionNoPermitidaException.class)
+                    .hasMessage("No se puede eliminar un pedido ya entregado.");
+            assertThat(pizza.getStock()).isEqualTo(7);
+            verify(pedidoRepository, never()).delete(any(Pedido.class));
+        }
+
+        @Test
+        @DisplayName("informa si el pedido a eliminar no existe")
+        void pedidoInexistente() {
+            when(pedidoRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> pedidoService.eliminar(99L))
                     .isInstanceOf(RecursoNoEncontradoException.class);
         }
     }

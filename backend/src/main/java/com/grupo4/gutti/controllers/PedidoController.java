@@ -2,12 +2,14 @@
  * Gutti - Sistema de gestión de pedidos, stock y ventas.
  * Autor: Alexis Monte
  * Fecha: 30/09/2026
- * Descripción: Controlador REST para la gestión de pedidos (registro y consulta de ventas).
+ * Descripción: Controlador REST para la gestión de pedidos (registro, consulta, modificación y eliminación de ventas).
  */
 
 package com.grupo4.gutti.controllers;
 
+import com.grupo4.gutti.dtos.pedido.CambiarEstadoPedidoDTO;
 import com.grupo4.gutti.dtos.pedido.HistorialPedidosDTO;
+import com.grupo4.gutti.dtos.pedido.ModificarPedidoDTO;
 import com.grupo4.gutti.dtos.pedido.PedidoRespuestaDTO;
 import com.grupo4.gutti.dtos.pedido.RegistrarPedidoDTO;
 import com.grupo4.gutti.enums.TipoDeEntrega;
@@ -73,5 +75,43 @@ public class PedidoController {
     @GetMapping("/{id}")
     public PedidoRespuestaDTO obtenerPorId(@PathVariable Long id) {
         return pedidoService.obtenerPorId(id);
+    }
+
+    /**
+     * Modifica los productos y los datos de entrega de un pedido.
+     *
+     * @param id  identificador del pedido
+     * @param dto nuevos datos del pedido
+     * @return el pedido actualizado con el total recalculado
+     */
+    @PutMapping("/{id}")
+    public PedidoRespuestaDTO modificar(@PathVariable Long id, @Valid @RequestBody ModificarPedidoDTO dto) {
+        log.info("request para modificar pedido {}", id);
+        return pedidoService.modificar(id, dto);
+    }
+
+    /**
+     * Cambia el estado de un pedido (PENDIENTE o ENTREGADO).
+     *
+     * @param id  identificador del pedido
+     * @param dto nuevo estado
+     * @return el pedido con el estado actualizado
+     */
+    @PatchMapping("/{id}/estado")
+    public PedidoRespuestaDTO cambiarEstado(@PathVariable Long id, @Valid @RequestBody CambiarEstadoPedidoDTO dto) {
+        log.info("request para cambiar estado del pedido {} a {}", id, dto.getEstado());
+        return pedidoService.cambiarEstado(id, dto.getEstado());
+    }
+
+    /**
+     * Elimina un pedido y repone el stock de sus productos.
+     *
+     * @param id identificador del pedido
+     */
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void eliminar(@PathVariable Long id) {
+        log.info("request para eliminar pedido {}", id);
+        pedidoService.eliminar(id);
     }
 }
