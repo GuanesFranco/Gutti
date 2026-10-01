@@ -2,7 +2,7 @@
  * Gutti - Sistema de gestión de pedidos, stock y ventas.
  * Autor: Alexis Monte
  * Fecha: 30/09/2026
- * Descripción: Lógica de negocio para registrar, consultar y modificar pedidos.
+ * Descripción: Lógica de negocio para registrar, consultar, modificar y eliminar pedidos.
  */
 
 package com.grupo4.gutti.services;
@@ -180,6 +180,23 @@ public class PedidoService {
         log.info("Pedido {}: estado {} -> {}", id, pedido.getEstado(), nuevoEstado);
         pedido.setEstado(nuevoEstado);
         return PedidoMapper.aRespuesta(pedidoRepository.save(pedido));
+    }
+
+    /**
+     * Elimina un pedido cancelado o creado por error y repone el stock de sus productos.
+     * Como la recaudación se calcula sobre los pedidos existentes, el monto deja de sumarse.
+     *
+     * @param id identificador del pedido
+     * @throws OperacionNoPermitidaException si el pedido ya fue entregado
+     * @throws RecursoNoEncontradoException si el pedido no existe
+     */
+    @Transactional
+    public void eliminar(Long id) {
+        Pedido pedido = buscarPedido(id);
+        pedido.validarQueSePuedeEliminar();
+        pedido.quitarItemsReponiendoStock();
+        pedidoRepository.delete(pedido);
+        log.info("Pedido {} eliminado y stock repuesto", id);
     }
 
     private void agregarItems(Pedido pedido, List<ItemPedidoDTO> items) {

@@ -2,7 +2,7 @@
  * Gutti - Sistema de gestión de pedidos, stock y ventas.
  * Autor: Alexis Monte
  * Fecha: 30/09/2026
- * Descripción: Controlador REST para la gestión de pedidos (registro, consulta y modificación de ventas).
+ * Descripción: Controlador REST para la gestión de pedidos (registro, consulta, modificación y eliminación de ventas).
  */
 
 package com.grupo4.gutti.controllers;
@@ -101,5 +101,17 @@ public class PedidoController {
     public PedidoRespuestaDTO cambiarEstado(@PathVariable Long id, @Valid @RequestBody CambiarEstadoPedidoDTO dto) {
         log.info("request para cambiar estado del pedido {} a {}", id, dto.getEstado());
         return pedidoService.cambiarEstado(id, dto.getEstado());
+    }
+
+    /**
+     * Elimina un pedido y repone el stock de sus productos.
+     *
+     * @param id identificador del pedido
+     */
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void eliminar(@PathVariable Long id) {
+        log.info("request para eliminar pedido {}", id);
+        pedidoService.eliminar(id);
     }
 }

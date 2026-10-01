@@ -14,6 +14,7 @@ y enviarlo en el header `Authorization: Bearer <token>`. También se pueden prob
 | GET | `/api/v1/pedidos/{id}` | Consultar pedidos | 200 + detalle del pedido |
 | PUT | `/api/v1/pedidos/{id}` | Modificar pedidos | 200 + pedido con total recalculado |
 | PATCH | `/api/v1/pedidos/{id}/estado` | Modificar pedidos | 200 |
+| DELETE | `/api/v1/pedidos/{id}` | Eliminar pedidos | 204 |
 
 ### Registrar pedido
 ```json
@@ -52,6 +53,10 @@ Si no hay resultados: `"pedidos": []` y `"mensaje": "No se encontraron pedidos"`
   Cantidad 0 o negativa → **400** "Ingrese una cantidad válida (mayor a cero)".
   Un pedido `ENTREGADO` no se puede modificar → **409**.
 - `PATCH /api/v1/pedidos/{id}/estado` con `{ "estado": "ENTREGADO" }`.
+
+### Eliminar pedido
+`DELETE /api/v1/pedidos/{id}` → repone el stock; al no existir más, deja de sumar en la recaudación.
+Si está entregado → **409** "No se puede eliminar un pedido ya entregado."
 
 ## Códigos de error
 | Código | Cuándo |

@@ -282,6 +282,45 @@ class PedidoServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("Eliminar pedido")
+    class Eliminar {
+
+        @Test
+        @DisplayName("elimina el pedido y repone el stock")
+        void eliminaYReponeStock() {
+            Pedido pedido = pedidoCon(EstadoPedido.PENDIENTE, pizza, 3);
+            when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+
+            pedidoService.eliminar(1L);
+
+            assertThat(pizza.getStock()).isEqualTo(10);
+            verify(pedidoRepository).delete(pedido);
+        }
+
+        @Test
+        @DisplayName("no permite eliminar un pedido ya entregado")
+        void noEliminaPedidoEntregado() {
+            Pedido pedido = pedidoCon(EstadoPedido.ENTREGADO, pizza, 3);
+            when(pedidoRepository.findById(1L)).thenReturn(Optional.of(pedido));
+
+            assertThatThrownBy(() -> pedidoService.eliminar(1L))
+                    .isInstanceOf(OperacionNoPermitidaException.class)
+                    .hasMessage("No se puede eliminar un pedido ya entregado.");
+            assertThat(pizza.getStock()).isEqualTo(7);
+            verify(pedidoRepository, never()).delete(any(Pedido.class));
+        }
+
+        @Test
+        @DisplayName("informa si el pedido a eliminar no existe")
+        void pedidoInexistente() {
+            when(pedidoRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> pedidoService.eliminar(99L))
+                    .isInstanceOf(RecursoNoEncontradoException.class);
+        }
+    }
+
     private static Producto producto(Long id, String nombre, double precio, int stock) {
         return Producto.builder()
                 .id(id).nombre(nombre).categoria("Comidas").precio(precio).stock(stock).estadoActivo(true)

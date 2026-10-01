@@ -19,6 +19,8 @@ import com.grupo4.gutti.exceptions.OperacionNoPermitidaException;
 @Builder
 public class Pedido {
 
+    public static final String MENSAJE_PEDIDO_ENTREGADO = "No se puede eliminar un pedido ya entregado.";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -110,6 +112,15 @@ public class Pedido {
      */
     public boolean estaEntregado() {
         return estado == EstadoPedido.ENTREGADO;
+    }
+
+    /**
+     * @throws OperacionNoPermitidaException si el pedido ya fue entregado
+     */
+    public void validarQueSePuedeEliminar() {
+        if (estaEntregado()) {
+            throw new OperacionNoPermitidaException(MENSAJE_PEDIDO_ENTREGADO);
+        }
     }
 
     /**
