@@ -2,17 +2,19 @@
  * Gutti - Sistema de gestión de pedidos, stock y ventas.
  * Autor: Alexis Monte
  * Fecha: 30/09/2026
- * Descripción: Lógica de negocio para registrar y consultar pedidos.
+ * Descripción: Lógica de negocio para registrar, consultar y modificar pedidos.
  */
 
 package com.grupo4.gutti.services;
 
 import com.grupo4.gutti.dtos.pedido.HistorialPedidosDTO;
 import com.grupo4.gutti.dtos.pedido.ItemPedidoDTO;
+import com.grupo4.gutti.dtos.pedido.ModificarPedidoDTO;
 import com.grupo4.gutti.dtos.pedido.PedidoRespuestaDTO;
 import com.grupo4.gutti.dtos.pedido.RegistrarPedidoDTO;
 import com.grupo4.gutti.enums.EstadoPedido;
 import com.grupo4.gutti.enums.TipoDeEntrega;
+import com.grupo4.gutti.exceptions.OperacionNoPermitidaException;
 import com.grupo4.gutti.exceptions.RecursoNoEncontradoException;
 import com.grupo4.gutti.mappers.PedidoMapper;
 import com.grupo4.gutti.models.Pedido;
@@ -131,6 +133,53 @@ public class PedidoService {
     @Transactional(readOnly = true)
     public PedidoRespuestaDTO obtenerPorId(Long id) {
         return PedidoMapper.aRespuesta(buscarPedido(id));
+    }
+
+    /**
+     * Modifica los datos de entrega y los productos de un pedido. Repone el stock de los productos
+     * anteriores, descuenta el de los nuevos y recalcula el total.
+     *
+     * @param id  identificador del pedido
+     * @param dto nuevos datos de entrega y lista completa de productos
+     * @return el pedido actualizado
+     * @throws OperacionNoPermitidaException si el pedido ya fue entregado
+     * @throws com.grupo4.gutti.exceptions.StockInsuficienteException si un producto no tiene stock;
+     *         en ese caso no se guarda ningún cambio
+     */
+    @Transactional
+    public PedidoRespuestaDTO modificar(Long id, ModificarPedidoDTO dto) {
+        Pedido pedido = buscarPedido(id);
+        pedido.validarQueSePuedeModificar();
+        validarDatosDeEntrega(dto.getTipoDeEntrega(), dto.getDireccionEntrega());
+
+        pedido.setTipoDeEntrega(dto.getTipoDeEntrega());
+        pedido.setNombreCliente(dto.getNombreCliente());
+        pedido.setTelefono(dto.getTelefono());
+        pedido.setDireccionEntrega(dto.getDireccionEntrega());
+
+        // Primero se devuelve el stock de los ítems actuales y después se descuenta el de los nuevos.
+        // Si algún producto no tiene stock, la excepción deshace toda la transacción.
+        pedido.quitarItemsReponiendoStock();
+        agregarItems(pedido, dto.getItems());
+
+        Pedido guardado = pedidoRepository.save(pedido);
+        log.info("Pedido {} modificado. Nuevo total: {}", id, guardado.calcularCostoTotal());
+        return PedidoMapper.aRespuesta(guardado);
+    }
+
+    /**
+     * Cambia el estado de un pedido, por ejemplo de PENDIENTE a ENTREGADO.
+     *
+     * @param id          identificador del pedido
+     * @param nuevoEstado estado a asignar
+     * @return el pedido con el estado actualizado
+     */
+    @Transactional
+    public PedidoRespuestaDTO cambiarEstado(Long id, EstadoPedido nuevoEstado) {
+        Pedido pedido = buscarPedido(id);
+        log.info("Pedido {}: estado {} -> {}", id, pedido.getEstado(), nuevoEstado);
+        pedido.setEstado(nuevoEstado);
+        return PedidoMapper.aRespuesta(pedidoRepository.save(pedido));
     }
 
     private void agregarItems(Pedido pedido, List<ItemPedidoDTO> items) {
