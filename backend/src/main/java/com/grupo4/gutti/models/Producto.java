@@ -60,6 +60,16 @@ public class Producto {
 
 
     /**
+     * Devuelve unidades al stock, por ejemplo al quitar un producto de un pedido.
+     *
+     * @param cantidad unidades a reponer (mayor a cero)
+     */
+    public void reponerStock(int cantidad) {
+        validarCantidadPositiva(cantidad);
+        this.stock += cantidad;
+    }
+
+    /**
      * @param cantidad unidades requeridas
      * @return true si el stock alcanza para esa cantidad
      */

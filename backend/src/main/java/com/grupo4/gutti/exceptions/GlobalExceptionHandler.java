@@ -39,6 +39,11 @@ public class GlobalExceptionHandler {
     }
 
 
+    @ExceptionHandler(OperacionNoPermitidaException.class)
+    public ResponseEntity<String> handleOperacionNoPermitidaException(OperacionNoPermitidaException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ResponseEntity<String> handleRecursoNoEncontradoException(RecursoNoEncontradoException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
