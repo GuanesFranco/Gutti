@@ -17,27 +17,22 @@ direction TB
 	    -Double precio
 	    -Integer stock
 	    -boolean estadoActivo
-	    +descontarStock(int cantidad) void
-	    +tieneStockSuficiente(int cantidad) boolean
     }
 
     class Pedido {
 	    -Long id
 	    -LocalDateTime fechaHora
-	    -EstadoPedido estado
+	    -String estado
 	    -String nombreCliente
 	    -String telefono
-	    -String direccionEntrega
-	    -TipoDeEntrega tipoDeEntrega
-	    +agregarItem(Producto producto, int cantidad) void
-	    +sumarItems() int
+		-String tipo_de_entrega
+	    +sumarItems() Double
 	    +calcularCostoTotal() Double
     }
 
     class ItemPedido {
 	    -Long id
 	    -Integer cantidad
-	    -Double precioUnitario
 	    +calcularSubtotal() Double
     }
 
@@ -57,21 +52,7 @@ direction TB
   
 	
 
-    class EstadoPedido {
-	    <<enumeration>>
-	    PENDIENTE
-	    ENTREGADO
-    }
-
-    class TipoDeEntrega {
-	    <<enumeration>>
-	    MOSTRADOR
-	    DELIVERY
-    }
-
     Usuario "1" --* "1" Cliente : tiene
-    Pedido --> EstadoPedido
-    Pedido --> TipoDeEntrega
     Pedido "1" *-- "*" ItemPedido : contiene
     ItemPedido "*" --> "1" Producto : asocia
   

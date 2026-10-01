@@ -5,7 +5,6 @@ import lombok.*;
 import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import com.grupo4.gutti.exceptions.StockInsuficienteException;
 
 @Entity
 @Table(name = "productos")
@@ -41,46 +40,5 @@ public class Producto {
 
     @Column(nullable = false)
     private boolean estadoActivo;
-
-    /**
-     * Descuenta unidades del stock al venderse el producto.
-     *
-     * @param cantidad unidades a descontar (mayor a cero)
-     * @throws StockInsuficienteException si no hay stock suficiente
-     */
-    public void descontarStock(int cantidad) {
-        validarCantidadPositiva(cantidad);
-        if (!tieneStockSuficiente(cantidad)) {
-            throw new StockInsuficienteException(
-                    "Stock insuficiente para el producto '" + nombre + "'. Disponible: " + stock
-                            + ", solicitado: " + cantidad + ".");
-        }
-        this.stock -= cantidad;
-    }
-
-
-    /**
-     * Devuelve unidades al stock, por ejemplo al quitar un producto de un pedido.
-     *
-     * @param cantidad unidades a reponer (mayor a cero)
-     */
-    public void reponerStock(int cantidad) {
-        validarCantidadPositiva(cantidad);
-        this.stock += cantidad;
-    }
-
-    /**
-     * @param cantidad unidades requeridas
-     * @return true si el stock alcanza para esa cantidad
-     */
-    public boolean tieneStockSuficiente(int cantidad) {
-        return stock != null && stock >= cantidad;
-    }
-
-    private static void validarCantidadPositiva(int cantidad) {
-        if (cantidad <= 0) {
-            throw new IllegalArgumentException("La cantidad debe ser mayor a cero.");
-        }
-    }
 
 }
