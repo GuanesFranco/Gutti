@@ -6,7 +6,7 @@ import com.grupo4.gutti.dtos.Producto.ProductoDTO;
 import com.grupo4.gutti.dtos.Producto.ProductoResponse;
 import com.grupo4.gutti.services.ProductoService;
 
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import org.springframework.web.bind.annotation.RequestBody;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -97,7 +97,7 @@ public List<ProductoResponse> filtroProductos(FilterProductoRequest request){
 @PutMapping ("/modificarProducto/{id}")
 @ResponseStatus (HttpStatus.OK)
 
-public ProductoResponse actualizarProducto(@PathVariable Long id,@Valid ProductoDTO request){
+public ProductoResponse actualizarProducto(@PathVariable Long id, @Valid @RequestBody ProductoDTO request){
     return service.ActualizarProducto(request, id);
 }
 
