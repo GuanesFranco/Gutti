@@ -1,6 +1,9 @@
 package com.grupo4.gutti.dtos.Producto;
 
+import com.grupo4.gutti.enums.CategoriasEnum;
+
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
@@ -13,14 +16,14 @@ public class ProductoDTO {
     @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
 
-    @NotBlank(message = "La categoria es obligatoria")
-    private String categoria;
+    @NotNull(message = "La categoria es obligatoria")
+    private CategoriasEnum categoria;
 
-    @NotBlank(message = "El precio es obligatorio")
+    @NotNull(message = "El precio es obligatorio")
     @Positive(message = "El precio debe ser mayor a 0")
-    private double precio;
+    private Double precio;
 
-    @NotBlank(message = "El stock es obligatorio")
+    @NotNull(message = "El stock es obligatorio")
     @Positive(message = "El stock debe ser mayor a 0")
     private Integer stock;
 

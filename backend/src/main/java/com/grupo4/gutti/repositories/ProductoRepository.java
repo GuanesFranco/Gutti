@@ -15,7 +15,7 @@ import java.util.List;
 
 public interface ProductoRepository extends JpaRepository<Producto, Long>, JpaSpecificationExecutor<Producto>{
 
-    List<Producto> findByCategory(String categoria);
+    List<Producto> findByCategoria(String categoria);
 
     boolean existsByNombre(String nombre);
 
@@ -23,14 +23,11 @@ public interface ProductoRepository extends JpaRepository<Producto, Long>, JpaSp
 
     Producto findByNombre(String nombre);
 
-    boolean findByActiveState(boolean estadoActivo); // revisar
-
     
     default List<Producto> filterQuery(FilterProductoRequest request){
 
     // lo condicionamos a que solo busque productos activos
-    Specification<Producto> spec = (root, query, cb) -> 
-        cb.equal(root.get("estadoActivo"), true);
+    Specification<Producto> spec = Specification.unrestricted();
 
         if (request.getNombre() != null && !request.getNombre().isBlank()) {
             spec = spec.and((root, query, cb) -> 
@@ -43,6 +40,13 @@ public interface ProductoRepository extends JpaRepository<Producto, Long>, JpaSp
                 cb.equal(root.get("categoria"), request.getCategoria().name())
             );
         }
+        
+        if(request.getEstadoActivo() != null){
+            spec = spec.and((root, query, cb) -> 
+            cb.equal(root.get("estadoActivo"), request.getEstadoActivo()));
+                
+         }
+
 
     Sort sort = Sort.unsorted();
 

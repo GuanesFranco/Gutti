@@ -13,6 +13,7 @@ public class ProductoResponse {
     private String categoria;
     private double precio;
     private Integer stock;
+    private String descripcion;
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaModificacion;
 

@@ -9,6 +9,7 @@ public class FilterProductoRequest {
 
     private String nombre;
     private CategoriasEnum categoria;
+    private Boolean estadoActivo;
     private String ordenStock; // ascendente o descendente
 
 }
