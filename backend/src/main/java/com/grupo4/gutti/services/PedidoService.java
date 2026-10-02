@@ -1,237 +1,205 @@
-/*
- * Gutti - Sistema de gestión de pedidos, stock y ventas.
- * Autor: Alexis Monte
- * Fecha: 30/09/2026
- * Descripción: Lógica de negocio para registrar, consultar, modificar y eliminar pedidos.
- */
-
 package com.grupo4.gutti.services;
-
-import com.grupo4.gutti.dtos.pedido.HistorialPedidosDTO;
-import com.grupo4.gutti.dtos.pedido.ItemPedidoDTO;
-import com.grupo4.gutti.dtos.pedido.ModificarPedidoDTO;
-import com.grupo4.gutti.dtos.pedido.PedidoRespuestaDTO;
-import com.grupo4.gutti.dtos.pedido.RegistrarPedidoDTO;
-import com.grupo4.gutti.enums.EstadoPedido;
-import com.grupo4.gutti.enums.TipoDeEntrega;
-import com.grupo4.gutti.exceptions.OperacionNoPermitidaException;
-import com.grupo4.gutti.exceptions.RecursoNoEncontradoException;
-import com.grupo4.gutti.mappers.PedidoMapper;
-import com.grupo4.gutti.models.Pedido;
-import com.grupo4.gutti.models.Producto;
-import com.grupo4.gutti.models.Usuario;
-import com.grupo4.gutti.repositories.PedidoRepository;
-import com.grupo4.gutti.repositories.PedidoSpecifications;
-import com.grupo4.gutti.repositories.ProductoRepository;
-import com.grupo4.gutti.repositories.UsuarioRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Servicio de pedidos: aplica las reglas de negocio de las ventas.
- *
- * @author Alexis Monte
- */
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.grupo4.gutti.dtos.pedido.PedidoDTO;
+import com.grupo4.gutti.dtos.pedido.PedidoResponse;
+import com.grupo4.gutti.enums.TipoDeEntrega;
+import com.grupo4.gutti.models.ItemPedido;
+import com.grupo4.gutti.models.Pedido;
+import com.grupo4.gutti.models.Producto;
+import com.grupo4.gutti.models.Usuario;
+import com.grupo4.gutti.repositories.PedidoRepository;
+import com.grupo4.gutti.repositories.ProductoRepository;
+import com.grupo4.gutti.repositories.UsuarioRepository;
+
+import lombok.RequiredArgsConstructor;
+
+// @Transactional: si algo falla en el medio (por ejemplo falta stock) se deshacen todos los cambios.
 @Service
 @RequiredArgsConstructor
-@Slf4j
+@Transactional
 public class PedidoService {
-
-    public static final String MENSAJE_SIN_PEDIDOS = "No se encontraron pedidos";
 
     private final PedidoRepository pedidoRepository;
     private final ProductoRepository productoRepository;
     private final UsuarioRepository usuarioRepository;
 
-    /**
-     * Registra un pedido nuevo: descuenta el stock de cada producto y calcula el total a pagar.
-     *
-     * @param dto          datos del pedido (tipo de entrega, cliente y productos)
-     * @param emailUsuario email del administrador autenticado que registra la venta
-     * @return el pedido registrado con sus ítems y el total
-     * @throws com.grupo4.gutti.exceptions.StockInsuficienteException si algún producto no tiene stock suficiente
-     * @throws RecursoNoEncontradoException si un producto o el usuario no existen
-     * @throws IllegalArgumentException si el pedido no tiene productos o falta la dirección de un delivery
-     */
-    @Transactional
-    public PedidoRespuestaDTO registrar(RegistrarPedidoDTO dto, String emailUsuario) {
-        log.info("Registrando pedido de tipo {}", dto.getTipoDeEntrega());
-        validarDatosDeEntrega(dto.getTipoDeEntrega(), dto.getDireccionEntrega());
+    public PedidoResponse registrar(PedidoDTO datos, String emailUsuario) {
+        validar(datos);
 
-        Pedido pedido = Pedido.builder()
-                .fechaHora(LocalDateTime.now())
-                .estado(EstadoPedido.PENDIENTE)
-                .tipoDeEntrega(dto.getTipoDeEntrega())
-                .nombreCliente(dto.getNombreCliente())
-                .telefono(dto.getTelefono())
-                .direccionEntrega(dto.getDireccionEntrega())
-                .usuario(buscarUsuario(emailUsuario))
-                .build();
+        Usuario usuario = usuarioRepository.findByEmail(emailUsuario).orElse(null);
+        if (usuario == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
+        }
 
-        agregarItems(pedido, dto.getItems());
+        Pedido pedido = new Pedido();
+        pedido.setFechaHora(LocalDateTime.now());
+        pedido.setEstado(Pedido.ESTADO_PENDIENTE);
+        pedido.setTipoDeEntrega(datos.getTipoDeEntrega());
+        pedido.setNombreCliente(datos.getNombreCliente());
+        pedido.setTelefono(datos.getTelefono());
+        pedido.setUsuario(usuario);
+        agregarProductos(pedido, datos.getItems());
 
-        Pedido guardado = pedidoRepository.save(pedido);
-        log.info("Pedido {} registrado. Total: {}", guardado.getId(), guardado.calcularCostoTotal());
-        return PedidoMapper.aRespuesta(guardado);
+        pedidoRepository.save(pedido);
+        return convertir(pedido);
     }
 
-    /**
-     * Consulta el historial de ventas. Todos los filtros son opcionales y se pueden combinar.
-     *
-     * @param tipoDeEntrega filtra por MOSTRADOR o DELIVERY (null = todos)
-     * @param desde         fecha inicial inclusive (null = sin límite)
-     * @param hasta         fecha final inclusive (null = sin límite)
-     * @return los pedidos ordenados del más reciente al más antiguo, con la recaudación total;
-     *         si no hay resultados, la lista vacía y el mensaje "No se encontraron pedidos"
-     * @throws IllegalArgumentException si la fecha "desde" es posterior a "hasta"
-     */
-    @Transactional(readOnly = true)
-    public HistorialPedidosDTO consultar(TipoDeEntrega tipoDeEntrega, LocalDate desde, LocalDate hasta) {
+    // Historial del más nuevo al más viejo. Los filtros son opcionales: si llegan en null no se filtra por ese dato.
+    public List<PedidoResponse> consultar(TipoDeEntrega tipoDeEntrega, LocalDate desde, LocalDate hasta) {
         if (desde != null && hasta != null && desde.isAfter(hasta)) {
-            throw new IllegalArgumentException("La fecha 'desde' no puede ser posterior a la fecha 'hasta'.");
+            throw new IllegalArgumentException("La fecha 'desde' no puede ser posterior a la fecha 'hasta'");
         }
 
-        List<Specification<Pedido>> filtros = new ArrayList<>();
-        if (tipoDeEntrega != null) {
-            filtros.add(PedidoSpecifications.conTipoDeEntrega(tipoDeEntrega));
-        }
-        if (desde != null) {
-            filtros.add(PedidoSpecifications.desde(desde.atStartOfDay()));
-        }
-        if (hasta != null) {
-            filtros.add(PedidoSpecifications.antesDe(hasta.plusDays(1).atStartOfDay()));
+        List<PedidoResponse> resultado = new ArrayList<>();
+        for (Pedido pedido : pedidoRepository.findAllByOrderByFechaHoraDesc()) {
+            LocalDate fecha = pedido.getFechaHora().toLocalDate();
+            boolean cumpleTipo = (tipoDeEntrega == null) || (pedido.getTipoDeEntrega() == tipoDeEntrega);
+            boolean cumpleDesde = (desde == null) || !fecha.isBefore(desde);
+            boolean cumpleHasta = (hasta == null) || !fecha.isAfter(hasta);
+
+            if (cumpleTipo && cumpleDesde && cumpleHasta) {
+                resultado.add(convertir(pedido));
+            }
         }
 
-        List<PedidoRespuestaDTO> pedidos = pedidoRepository
-                .findAll(Specification.allOf(filtros), Sort.by(Sort.Direction.DESC, "fechaHora"))
-                .stream()
-                .map(PedidoMapper::aRespuesta)
-                .toList();
-        double recaudacionTotal = pedidos.stream().mapToDouble(PedidoRespuestaDTO::getTotal).sum();
-
-        return HistorialPedidosDTO.builder()
-                .pedidos(pedidos)
-                .recaudacionTotal(recaudacionTotal)
-                .mensaje(pedidos.isEmpty() ? MENSAJE_SIN_PEDIDOS : null)
-                .build();
+        if (resultado.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No se encontraron pedidos");
+        }
+        return resultado;
     }
 
-    /**
-     * @param id identificador del pedido
-     * @return el detalle del pedido
-     * @throws RecursoNoEncontradoException si el pedido no existe
-     */
-    @Transactional(readOnly = true)
-    public PedidoRespuestaDTO obtenerPorId(Long id) {
-        return PedidoMapper.aRespuesta(buscarPedido(id));
+    public Double calcularRecaudacion(TipoDeEntrega tipoDeEntrega, LocalDate desde, LocalDate hasta) {
+        double recaudacion = 0;
+        for (PedidoResponse pedido : consultar(tipoDeEntrega, desde, hasta)) {
+            recaudacion = recaudacion + pedido.getTotal();
+        }
+        return recaudacion;
     }
 
-    /**
-     * Modifica los datos de entrega y los productos de un pedido. Repone el stock de los productos
-     * anteriores, descuenta el de los nuevos y recalcula el total.
-     *
-     * @param id  identificador del pedido
-     * @param dto nuevos datos de entrega y lista completa de productos
-     * @return el pedido actualizado
-     * @throws OperacionNoPermitidaException si el pedido ya fue entregado
-     * @throws com.grupo4.gutti.exceptions.StockInsuficienteException si un producto no tiene stock;
-     *         en ese caso no se guarda ningún cambio
-     */
-    @Transactional
-    public PedidoRespuestaDTO modificar(Long id, ModificarPedidoDTO dto) {
+    public PedidoResponse obtenerPorId(Long id) {
+        return convertir(buscarPedido(id));
+    }
+
+    public PedidoResponse modificar(Long id, PedidoDTO datos) {
         Pedido pedido = buscarPedido(id);
-        pedido.validarQueSePuedeModificar();
-        validarDatosDeEntrega(dto.getTipoDeEntrega(), dto.getDireccionEntrega());
+        if (pedido.estaEntregado()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede modificar un pedido ya entregado");
+        }
+        validar(datos);
 
-        pedido.setTipoDeEntrega(dto.getTipoDeEntrega());
-        pedido.setNombreCliente(dto.getNombreCliente());
-        pedido.setTelefono(dto.getTelefono());
-        pedido.setDireccionEntrega(dto.getDireccionEntrega());
+        pedido.setTipoDeEntrega(datos.getTipoDeEntrega());
+        pedido.setNombreCliente(datos.getNombreCliente());
+        pedido.setTelefono(datos.getTelefono());
+        reponerStock(pedido);
+        pedido.getItems().clear();
+        agregarProductos(pedido, datos.getItems());
 
-        // Primero se devuelve el stock de los ítems actuales y después se descuenta el de los nuevos.
-        // Si algún producto no tiene stock, la excepción deshace toda la transacción.
-        pedido.quitarItemsReponiendoStock();
-        agregarItems(pedido, dto.getItems());
-
-        Pedido guardado = pedidoRepository.save(pedido);
-        log.info("Pedido {} modificado. Nuevo total: {}", id, guardado.calcularCostoTotal());
-        return PedidoMapper.aRespuesta(guardado);
+        pedidoRepository.save(pedido);
+        return convertir(pedido);
     }
 
-    /**
-     * Cambia el estado de un pedido, por ejemplo de PENDIENTE a ENTREGADO.
-     *
-     * @param id          identificador del pedido
-     * @param nuevoEstado estado a asignar
-     * @return el pedido con el estado actualizado
-     */
-    @Transactional
-    public PedidoRespuestaDTO cambiarEstado(Long id, EstadoPedido nuevoEstado) {
+    public PedidoResponse cambiarEstado(Long id, String estado) {
+        if (!Pedido.ESTADO_PENDIENTE.equals(estado) && !Pedido.ESTADO_ENTREGADO.equals(estado)) {
+            throw new IllegalArgumentException("El estado debe ser PENDIENTE o ENTREGADO");
+        }
+
         Pedido pedido = buscarPedido(id);
-        log.info("Pedido {}: estado {} -> {}", id, pedido.getEstado(), nuevoEstado);
-        pedido.setEstado(nuevoEstado);
-        return PedidoMapper.aRespuesta(pedidoRepository.save(pedido));
+        pedido.setEstado(estado);
+        pedidoRepository.save(pedido);
+        return convertir(pedido);
     }
 
-    /**
-     * Elimina un pedido cancelado o creado por error y repone el stock de sus productos.
-     * Como la recaudación se calcula sobre los pedidos existentes, el monto deja de sumarse.
-     *
-     * @param id identificador del pedido
-     * @throws OperacionNoPermitidaException si el pedido ya fue entregado
-     * @throws RecursoNoEncontradoException si el pedido no existe
-     */
-    @Transactional
     public void eliminar(Long id) {
         Pedido pedido = buscarPedido(id);
-        pedido.validarQueSePuedeEliminar();
-        pedido.quitarItemsReponiendoStock();
+        if (pedido.estaEntregado()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede eliminar un pedido ya entregado.");
+        }
+
+        reponerStock(pedido);
         pedidoRepository.delete(pedido);
-        log.info("Pedido {} eliminado y stock repuesto", id);
     }
 
-    private void agregarItems(Pedido pedido, List<ItemPedidoDTO> items) {
-        if (items == null || items.isEmpty()) {
+    private void validar(PedidoDTO datos) {
+        if (datos.getTipoDeEntrega() == null) {
+            throw new IllegalArgumentException("El tipo de entrega es obligatorio (MOSTRADOR o DELIVERY)");
+        }
+        if (datos.getItems() == null || datos.getItems().isEmpty()) {
             throw new IllegalArgumentException("El pedido debe tener al menos un producto");
         }
-        for (ItemPedidoDTO itemDTO : items) {
-            pedido.agregarItem(buscarProductoActivo(itemDTO.getProductoId()), itemDTO.getCantidad());
+        for (PedidoDTO.Item item : datos.getItems()) {
+            if (item.getProductoId() == null) {
+                throw new IllegalArgumentException("Falta el productoId de uno de los productos");
+            }
+            if (item.getCantidad() == null || item.getCantidad() <= 0) {
+                throw new IllegalArgumentException("Ingrese una cantidad válida (mayor a cero)");
+            }
         }
     }
 
-    private void validarDatosDeEntrega(TipoDeEntrega tipoDeEntrega, String direccionEntrega) {
-        if (tipoDeEntrega == TipoDeEntrega.DELIVERY && (direccionEntrega == null || direccionEntrega.isBlank())) {
-            throw new IllegalArgumentException(
-                    "La dirección de entrega es obligatoria para pedidos con envío a domicilio.");
+    private void agregarProductos(Pedido pedido, List<PedidoDTO.Item> items) {
+        for (PedidoDTO.Item item : items) {
+            Producto producto = productoRepository.findById(item.getProductoId()).orElse(null);
+            if (producto == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "No existe el producto con id " + item.getProductoId());
+            }
+            if (!producto.isEstadoActivo()) {
+                throw new IllegalArgumentException("El producto " + producto.getNombre() + " está desactivado");
+            }
+
+            // Si no hay stock suficiente, Producto lanza StockInsuficienteException (409).
+            producto.descontarStock(item.getCantidad());
+
+            ItemPedido itemPedido = new ItemPedido();
+            itemPedido.setProducto(producto);
+            itemPedido.setCantidad(item.getCantidad());
+            itemPedido.setPrecioUnitario(producto.getPrecio());
+            itemPedido.setPedido(pedido);
+            pedido.getItems().add(itemPedido);
+        }
+    }
+
+    private void reponerStock(Pedido pedido) {
+        for (ItemPedido item : pedido.getItems()) {
+            item.getProducto().reponerStock(item.getCantidad());
         }
     }
 
     private Pedido buscarPedido(Long id) {
-        return pedidoRepository.findById(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException("No existe el pedido con id " + id));
-    }
-
-    private Producto buscarProductoActivo(Long productoId) {
-        Producto producto = productoRepository.findById(productoId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("No existe el producto con id " + productoId));
-        if (!producto.isEstadoActivo()) {
-            throw new IllegalArgumentException(
-                    "El producto '" + producto.getNombre() + "' está deshabilitado y no se puede vender.");
+        Pedido pedido = pedidoRepository.findById(id).orElse(null);
+        if (pedido == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No existe el pedido con id " + id);
         }
-        return producto;
+        return pedido;
     }
 
-    private Usuario buscarUsuario(String email) {
-        return usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new RecursoNoEncontradoException("No existe el usuario " + email));
+    private PedidoResponse convertir(Pedido pedido) {
+        PedidoResponse respuesta = new PedidoResponse();
+        respuesta.setId(pedido.getId());
+        respuesta.setFechaHora(pedido.getFechaHora());
+        respuesta.setEstado(pedido.getEstado());
+        respuesta.setTipoDeEntrega(pedido.getTipoDeEntrega());
+        respuesta.setNombreCliente(pedido.getNombreCliente());
+        respuesta.setTelefono(pedido.getTelefono());
+        respuesta.setTotal(pedido.calcularCostoTotal());
+
+        for (ItemPedido item : pedido.getItems()) {
+            PedidoResponse.Item itemRespuesta = new PedidoResponse.Item();
+            itemRespuesta.setNombreProducto(item.getProducto().getNombre());
+            itemRespuesta.setCantidad(item.getCantidad());
+            itemRespuesta.setSubtotal(item.calcularSubtotal());
+            respuesta.getItems().add(itemRespuesta);
+        }
+        return respuesta;
     }
 }
