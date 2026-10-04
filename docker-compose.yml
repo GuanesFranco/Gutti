@@ -8,8 +8,8 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: "123456"
+      POSTGRES_USER: gutti
+      POSTGRES_PASSWORD: "gutti123"
       POSTGRES_DB: gutti_db
     volumes:
       - gutti_db_data:/var/lib/postgresql/data
@@ -32,8 +32,8 @@ services:
     environment:
       - DB_HOST=db
       - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD="123456"
+      - DB_USER=gutti
+      - DB_PASSWORD="gutti123"
     depends_on:
       db:
         condition: service_healthy
