@@ -27,14 +27,11 @@ public class ItemPedido {
     @Column(nullable = false)
     private Integer cantidad;
 
-    /**
-     * Precio del producto al momento de la venta. Se guarda para que el historial
-     * no cambie si luego se modifica el precio del producto.
-     */
+    // Precio al momento de la venta: si después cambia el precio del producto, el historial no cambia.
     @Column(nullable = false)
     private Double precioUnitario;
 
-    // Se excluye de toString/equals/hashCode para evitar recursión infinita con Pedido.items
+    // Se excluye para que Pedido e ItemPedido no se llamen entre sí en un bucle infinito.
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @ManyToOne
@@ -45,9 +42,6 @@ public class ItemPedido {
     @JoinColumn(name = "producto_id", nullable = false)
     private Producto producto;
 
-    /**
-     * @return precio unitario al momento de la venta multiplicado por la cantidad
-     */
     public Double calcularSubtotal() {
         return precioUnitario * cantidad;
     }
