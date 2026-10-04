@@ -43,6 +43,7 @@ public class AutenticacionService {
 
         Cliente cliente = Cliente.builder()
                 .telefono(dto.getTelefono())
+                .direccion(dto.getDireccion())
                 .usuario(usuario)
                 .build();
         usuario.setCliente(cliente);
