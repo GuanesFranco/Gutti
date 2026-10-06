@@ -23,9 +23,9 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_USER: gutti
-          POSTGRES_PASSWORD: gutti123
-          POSTGRES_DB: gutti_db
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.DB_NAME }}
         ports:
           - 5432:5432
         options: >-
@@ -50,3 +50,9 @@ jobs:
 
       - name: Compilar y correr Pruebas
         run: mvn clean test
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
