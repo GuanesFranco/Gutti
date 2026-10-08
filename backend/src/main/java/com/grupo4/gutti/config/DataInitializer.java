@@ -28,24 +28,26 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
 
         //Crear Administrador 
+        String adminPass = System.getenv().getOrDefault("ADMIN_PASSWORD", "admin123");
         if (!usuarioRepository.existsByEmail("admin@gutti.com")) {
             Usuario admin = Usuario.builder()
                     .nombre("Admin Gutti")
                     .email("admin@gutti.com")
-                    .passwordHash(passwordEncoder.encode("admin123"))
+                    .passwordHash(passwordEncoder.encode(adminPass))
                     .rol("ADMIN")
                     .build();
             
             usuarioRepository.save(admin);
-            log.info("Administrador creado: admin@gutti.com / admin123");
+            log.info("Administrador creado: admin@gutti.com / [OCULTO]");
         }
 
         //Crear Cliente 
+        String clientPass = System.getenv().getOrDefault("CLIENT_PASSWORD", "cliente123");
         if (!usuarioRepository.existsByEmail("cliente@gutti.com")) {
             Usuario usuarioCliente = Usuario.builder()
                     .nombre("Cliente Prueba")
                     .email("cliente@gutti.com")
-                    .passwordHash(passwordEncoder.encode("cliente123"))
+                    .passwordHash(passwordEncoder.encode(clientPass))
                     .rol("CLIENTE")
                     .build();
             
@@ -58,7 +60,7 @@ public class DataInitializer implements CommandLineRunner {
             usuarioCliente.setCliente(cliente);
             
             usuarioRepository.save(usuarioCliente);
-            log.info("Cliente creado: cliente@gutti.com / cliente123");
+            log.info("Cliente creado: cliente@gutti.com / [OCULTO]");
         }
 
         //Crear Productos iniciales de Cafeteria
