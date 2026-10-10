@@ -19,14 +19,11 @@ public interface ProductoRepository extends JpaRepository<Producto, Long>, JpaSp
 
     boolean existsByNombre(String nombre);
 
-    boolean existsById(Long id);
-
     Producto findByNombre(String nombre);
 
     
     default List<Producto> filterQuery(FilterProductoRequest request){
 
-    // lo condicionamos a que solo busque productos activos
     Specification<Producto> spec = Specification.unrestricted();
 
         if (request.getNombre() != null && !request.getNombre().isBlank()) {
