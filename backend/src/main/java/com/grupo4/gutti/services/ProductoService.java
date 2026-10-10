@@ -28,11 +28,12 @@ import jakarta.validation.constraints.NotBlank;
 
 public class ProductoService {
 
-    private final ProductoRepository ProductoRepository;
+    private final ProductoRepository productoRepository;
 
 
     private ProductoResponse mapearAProductoResponse(Producto producto) {
         return ProductoResponse.builder()
+                .id(producto.getId())
                 .nombre(producto.getNombre())
                 .categoria(producto.getCategoria())
                 .precio(producto.getPrecio())
@@ -44,9 +45,9 @@ public class ProductoService {
     }
 
 
-    public ProductoResponse CrearProducto(ProductoDTO request){
+    public ProductoResponse crearProducto(ProductoDTO request){
 
-        if(ProductoRepository.existsByNombre(request.getNombre().trim())){
+        if(productoRepository.existsByNombre(request.getNombre().trim())){
             log.warn("El producto {} ya existe", request.getNombre());
             throw new ResponseStatusException(HttpStatus.CONFLICT,"No se puede crear un producto ya existente");
         }
@@ -61,14 +62,14 @@ public class ProductoService {
         .estadoActivo(true) 
         .build();
 
-        Producto ProductoGuardado = ProductoRepository.save(producto); // lo guardamos en una variable para en el response poder
+        Producto ProductoGuardado = productoRepository.save(producto); // lo guardamos en una variable para en el response poder
                                                                       // conseguir info que se genera automaticamente ej id
 
         
         return mapearAProductoResponse(ProductoGuardado);
     }
 
-    public ProductoResponse ObtenerPorId(Long id){
+    public ProductoResponse obtenerPorId(Long id){
 
          if(id==null){
             log.warn("El id es obligatorio");
@@ -76,7 +77,7 @@ public class ProductoService {
         }
         // el find by id del repository devuelve un optional <t> si no encuentra nada devuelve un .empty y lanza la excepcion
         // se realizo el cambio en las funcionalidades por cambio de nombre 
-        Producto ProductoSolicitado = ProductoRepository.findById(id).orElseThrow(() -> {
+        Producto ProductoSolicitado = productoRepository.findById(id).orElseThrow(() -> {
             log.warn("El producto consultado no existe");
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "El producto no existe");
         });
@@ -84,14 +85,14 @@ public class ProductoService {
         return mapearAProductoResponse(ProductoSolicitado);
     }
 
-    public ModifiedStateProductoResponse EliminarProducto(Long Id){
+    public ModifiedStateProductoResponse eliminarProducto(Long Id){
         
        if(Id == null){
             log.warn("El id es obligatorio");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"El campo id es obligatorio");
         }
 
-        Producto ProductoSolicitado = ProductoRepository.findById(Id).orElseThrow(() -> {
+        Producto ProductoSolicitado = productoRepository.findById(Id).orElseThrow(() -> {
             log.warn("El producto consultado no existe");
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "El producto no existe");
         });
@@ -109,7 +110,7 @@ public class ProductoService {
       .build();  
     }
 
-    public ModifiedStateProductoResponse ActivarProducto (Long id){
+    public ModifiedStateProductoResponse activarProducto (Long id){
 
         // si bien es practicamente igual al delete, lo ideal es tener separada la logica para dar de alta y para eliminar
         if(id == null){
@@ -117,13 +118,13 @@ public class ProductoService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"El campo id es obligatorio");
         }
 
-         Producto ProductoSolicitado = ProductoRepository.findById(id).orElseThrow(() -> {
+         Producto ProductoSolicitado = productoRepository.findById(id).orElseThrow(() -> {
             log.warn("El producto consultado no existe");
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "El producto no existe");
         });
 
             if(ProductoSolicitado.isEstadoActivo()){
-                log.warn("El producto ya esta inactivo");
+                log.warn("El producto ya esta activo");
                 throw new ResponseStatusException(HttpStatus.CONFLICT,"El producto ya esta activo");
             }
 
@@ -135,24 +136,24 @@ public class ProductoService {
       .build();  
     }
 
-    public List<ProductoResponse> FiltroProductosDinamico (FilterProductoRequest request){
+    public List<ProductoResponse> filtroProductosDinamico (FilterProductoRequest request){
 
-       List<Producto> query = ProductoRepository.filterQuery(request);
+       List<Producto> query = productoRepository.filterQuery(request);
 
        return query.stream()
                 .map(this::mapearAProductoResponse)
                 .toList();
     }
 
-    public ProductoResponse ActualizarProducto (ProductoDTO request, Long id){
+    public ProductoResponse actualizarProducto (ProductoDTO request, Long id){
         
-        Producto Actualizar = ProductoRepository.findById(id).orElseThrow(() -> {
+        Producto Actualizar = productoRepository.findById(id).orElseThrow(() -> {
             log.warn("El producto consultado no existe");
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "El producto no existe");
         });
     
         if (!request.getNombre().trim().equalsIgnoreCase(Actualizar.getNombre())) {
-        if (ProductoRepository.existsByNombre(request.getNombre().trim())) {
+        if (productoRepository.existsByNombre(request.getNombre().trim())) {
             throw new ResponseStatusException(
                 HttpStatus.CONFLICT, "Ya existe otro producto con el nombre: " + request.getNombre()
             );
@@ -170,7 +171,7 @@ public class ProductoService {
         Actualizar.setStock(request.getStock());
         Actualizar.setDescripcion(request.getDescripcion());
 
-        Producto ProductoGuardado = ProductoRepository.save(Actualizar);
+        Producto ProductoGuardado = productoRepository.save(Actualizar);
 
         return mapearAProductoResponse(ProductoGuardado);
     }

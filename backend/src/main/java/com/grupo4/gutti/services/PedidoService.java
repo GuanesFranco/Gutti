@@ -72,9 +72,6 @@ public class PedidoService {
             }
         }
 
-        if (resultado.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No se encontraron pedidos");
-        }
         return resultado;
     }
 
