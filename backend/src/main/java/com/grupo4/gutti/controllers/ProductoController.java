@@ -84,6 +84,7 @@ public ProductoResponse obtenerPorId(@PathVariable Long id) {
  * 
  */
 @PostMapping("/crearProducto")
+@ResponseStatus(HttpStatus.CREATED)
 @ApiResponses(value = {
     @ApiResponse(
         responseCode = "201", 
