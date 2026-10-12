@@ -38,9 +38,13 @@ public class Usuario {
     @Column(nullable = false)
     private String passwordHash;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL)
     private Cliente cliente;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "usuario")
     private List<Pedido> pedidos;
 

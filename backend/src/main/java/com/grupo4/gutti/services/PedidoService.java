@@ -48,6 +48,9 @@ public class PedidoService {
         pedido.setNombreCliente(datos.getNombreCliente());
         pedido.setTelefono(datos.getTelefono());
         pedido.setUsuario(usuario);
+        if (usuario.getCliente() != null) {
+            pedido.setCliente(usuario.getCliente());
+        }
         agregarProductos(pedido, datos.getItems());
 
         pedidoRepository.save(pedido);
