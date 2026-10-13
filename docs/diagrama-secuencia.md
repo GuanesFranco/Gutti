@@ -3,20 +3,21 @@
 ​```mermaid
 sequenceDiagram
     actor Usuario
-    participant Pedido
-    participant ItemPedido
+    participant PedidoService
     participant Producto
+    participant Pedido
 
-    Usuario->>Pedido: agregarItem(producto, cantidad)
-    Pedido->>Producto: getStock()
-    Producto-->>Pedido: stock
-
-    alt stock >= cantidad
-        Pedido->>ItemPedido: <<create>> crear(producto, cantidad)
-        Pedido->>Producto: descontarStock(cantidad)
-        Pedido->>Pedido: sumarItems()
-        Pedido-->>Usuario: confirmacion("Item agregado", total)
-    else stock < cantidad
-        Pedido-->>Usuario: error("Stock insuficiente")
+    Usuario->>PedidoService: registrar(datos del pedido)
+    loop por cada producto pedido
+        PedidoService->>Producto: descontarStock(cantidad)
+        alt stock >= cantidad
+            Producto-->>PedidoService: stock descontado
+            PedidoService->>Pedido: agregar ItemPedido(producto, cantidad, precioUnitario)
+        else stock < cantidad
+            Producto-->>PedidoService: StockInsuficienteException
+            PedidoService-->>Usuario: error 409 "Stock insuficiente"
+        end
     end
+    PedidoService->>Pedido: calcularCostoTotal()
+    PedidoService-->>Usuario: 201 pedido registrado con su total
 ​```

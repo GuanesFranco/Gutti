@@ -17,6 +17,9 @@ direction TB
 	    -Double precio
 	    -Integer stock
 	    -boolean estadoActivo
+	    +descontarStock(int cantidad) void
+	    +reponerStock(int cantidad) void
+	    +tieneStockSuficiente(int cantidad) boolean
     }
 
     class Pedido {
@@ -28,11 +31,13 @@ direction TB
 		-String tipo_de_entrega
 	    +sumarItems() Double
 	    +calcularCostoTotal() Double
+	    +estaEntregado() boolean
     }
 
     class ItemPedido {
 	    -Long id
 	    -Integer cantidad
+	    -Double precioUnitario
 	    +calcularSubtotal() Double
     }
 

@@ -27,6 +27,13 @@ public class ItemPedido {
     @Column(nullable = false)
     private Integer cantidad;
 
+    // Precio al momento de la venta: si después cambia el precio del producto, el historial no cambia.
+    @Column(nullable = false)
+    private Double precioUnitario;
+
+    // Se excluye para que Pedido e ItemPedido no se llamen entre sí en un bucle infinito.
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToOne
     @JoinColumn(name = "pedido_id", nullable = false)
     private Pedido pedido;
@@ -34,5 +41,9 @@ public class ItemPedido {
     @ManyToOne
     @JoinColumn(name = "producto_id", nullable = false)
     private Producto producto;
+
+    public Double calcularSubtotal() {
+        return precioUnitario * cantidad;
+    }
 
 }
