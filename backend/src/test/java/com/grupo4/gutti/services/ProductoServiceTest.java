@@ -1,4 +1,4 @@
-package com.grupo4.gutti;
+package com.grupo4.gutti.services;
 
 import com.grupo4.gutti.dtos.Producto.FilterProductoRequest;
 import com.grupo4.gutti.dtos.Producto.ModifiedStateProductoResponse;

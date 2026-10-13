@@ -237,7 +237,7 @@ public List<ProductoResponse> filtroProductos(@ParameterObject FilterProductoReq
     @ApiResponse(
         responseCode = "200", 
         description = "Producto modificado exitosamente.", 
-        content = @Content(schema = @Schema(implementation = ModifiedStateProductoResponse.class))
+        content = @Content(schema = @Schema(implementation = ProductoResponse.class))
     ),
     @ApiResponse(
         responseCode = "400", 

@@ -14,6 +14,7 @@ public class ProductoResponse {
     private double precio;
     private Integer stock;
     private String descripcion;
+    private boolean estadoActivo;
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaModificacion;
 

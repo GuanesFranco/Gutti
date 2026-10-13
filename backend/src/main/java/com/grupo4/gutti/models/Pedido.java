@@ -45,10 +45,14 @@ public class Pedido {
     @Column(nullable = false)
     private TipoDeEntrega tipoDeEntrega;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToOne
     @JoinColumn(name = "cliente_id")
     private Cliente cliente;

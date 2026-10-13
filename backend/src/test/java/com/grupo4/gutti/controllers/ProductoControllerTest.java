@@ -1,4 +1,4 @@
-package com.grupo4.gutti;
+package com.grupo4.gutti.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grupo4.gutti.controllers.ProductoController;
