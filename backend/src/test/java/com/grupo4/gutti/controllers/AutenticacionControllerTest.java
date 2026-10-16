@@ -8,7 +8,6 @@ import com.grupo4.gutti.exceptions.GlobalExceptionHandler;
 import com.grupo4.gutti.services.AutenticacionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,6 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("Pruebas Unitarias de AutenticacionController")
 class AutenticacionControllerTest {
 
     private MockMvc mockMvc;
@@ -45,150 +45,158 @@ class AutenticacionControllerTest {
                 .build();
     }
 
-    @Nested
-    @DisplayName("Pruebas de POST /api/v1/auth/registro")
-    class RegistroTests {
+    // ==========================================
+    // MÉTODOS HELPER (Para evitar duplicación)
+    // ==========================================
 
-        @Test
-        @DisplayName("Debe retornar 201 Created cuando los datos de registro son válidos")
-        void registrarCliente_DatosValidos_Retorna201() throws Exception {
-            RegistroClienteDTO dto = new RegistroClienteDTO();
-            dto.setNombre("Franco Guanes");
-            dto.setEmail("franco@gutti.com");
-            dto.setPassword("12345678");
-            dto.setTelefono("1122334455");
-            dto.setDireccion("Calle 123");
-
-            doNothing().when(autenticacionService).registrarCliente(any(RegistroClienteDTO.class));
-
-            mockMvc.perform(post("/api/v1/auth/registro")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
-                    .andExpect(status().isCreated());
-
-            verify(autenticacionService, times(1)).registrarCliente(any(RegistroClienteDTO.class));
-        }
-
-        @Test
-        @DisplayName("Debe retornar 400 Bad Request cuando el email ya está en uso")
-        void registrarCliente_EmailExistente_Retorna400() throws Exception {
-            RegistroClienteDTO dto = new RegistroClienteDTO();
-            dto.setNombre("Franco Guanes");
-            dto.setEmail("existente@gutti.com");
-            dto.setPassword("12345678");
-            dto.setTelefono("1122334455");
-            dto.setDireccion("Calle 123");
-
-            doThrow(new IllegalArgumentException("El email ingresado ya se encuentra registrado."))
-                    .when(autenticacionService).registrarCliente(any(RegistroClienteDTO.class));
-
-            mockMvc.perform(post("/api/v1/auth/registro")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(content().string("El email ingresado ya se encuentra registrado."));
-        }
-
-        @Test
-        @DisplayName("Debe retornar 400 Bad Request cuando la contraseña tiene menos de 8 caracteres")
-        void registrarCliente_PasswordCorta_Retorna400() throws Exception {
-            RegistroClienteDTO dto = new RegistroClienteDTO();
-            dto.setNombre("Franco Guanes");
-            dto.setEmail("franco@gutti.com");
-            dto.setPassword("123"); // Inválida (< 8 caracteres)
-            dto.setTelefono("1122334455");
-            dto.setDireccion("Calle 123");
-
-            mockMvc.perform(post("/api/v1/auth/registro")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
-                    .andExpect(status().isBadRequest());
-
-            verify(autenticacionService, never()).registrarCliente(any());
-        }
-
-        @Test
-        @DisplayName("Debe retornar 400 Bad Request cuando faltan campos obligatorios")
-        void registrarCliente_CamposFaltantes_Retorna400() throws Exception {
-            RegistroClienteDTO dto = new RegistroClienteDTO(); // Vacío
-
-            mockMvc.perform(post("/api/v1/auth/registro")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
-                    .andExpect(status().isBadRequest());
-
-            verify(autenticacionService, never()).registrarCliente(any());
-        }
+    private RegistroClienteDTO registroDTO(String nombre, String email, String password, String telefono, String direccion) {
+        RegistroClienteDTO dto = new RegistroClienteDTO();
+        dto.setNombre(nombre);
+        dto.setEmail(email);
+        dto.setPassword(password);
+        dto.setTelefono(telefono);
+        dto.setDireccion(direccion);
+        return dto;
     }
 
-    @Nested
-    @DisplayName("Pruebas de POST /api/v1/auth/iniciar-sesion")
-    class IniciarSesionTests {
+    private IniciarSesionDTO loginDTO(String email, String password) {
+        IniciarSesionDTO dto = new IniciarSesionDTO();
+        dto.setEmail(email);
+        dto.setPassword(password);
+        return dto;
+    }
 
-        @Test
-        @DisplayName("Debe retornar 200 OK con el token cuando las credenciales son correctas")
-        void iniciarSesion_CredencialesValidas_Retorna200ConToken() throws Exception {
-            IniciarSesionDTO dto = new IniciarSesionDTO();
-            dto.setEmail("franco@gutti.com");
-            dto.setPassword("12345678");
+    // ==========================================
+    // POST /api/v1/auth/registro
+    // ==========================================
 
-            when(autenticacionService.iniciarSesion(any(IniciarSesionDTO.class)))
-                    .thenReturn(new AutenticacionRespuestaDTO("token.jwt.valido"));
+    @Test
+    @DisplayName("registrarCliente() - Debe retornar 201 Created cuando los datos de registro son válidos")
+    void registrarCliente_conDatosValidos_retorna201() throws Exception {
+        // Arrange
+        RegistroClienteDTO dto = registroDTO("Franco Guanes", "franco@gutti.com", "12345678", "1122334455", "Calle 123");
+        doNothing().when(autenticacionService).registrarCliente(any(RegistroClienteDTO.class));
 
-            mockMvc.perform(post("/api/v1/auth/iniciar-sesion")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.token").value("token.jwt.valido"));
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth/registro")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isCreated());
 
-            verify(autenticacionService, times(1)).iniciarSesion(any(IniciarSesionDTO.class));
-        }
+        verify(autenticacionService, times(1)).registrarCliente(any(RegistroClienteDTO.class));
+    }
 
-        @Test
-        @DisplayName("Debe retornar 401 Unauthorized cuando las credenciales son inválidas")
-        void iniciarSesion_CredencialesInvalidas_Retorna401() throws Exception {
-            IniciarSesionDTO dto = new IniciarSesionDTO();
-            dto.setEmail("franco@gutti.com");
-            dto.setPassword("passwordIncorrecto");
+    @Test
+    @DisplayName("registrarCliente() - Debe retornar 400 Bad Request cuando el email ya está en uso")
+    void registrarCliente_conEmailExistente_retorna400() throws Exception {
+        // Arrange
+        RegistroClienteDTO dto = registroDTO("Franco Guanes", "existente@gutti.com", "12345678", "1122334455", "Calle 123");
+        doThrow(new IllegalArgumentException("El email ingresado ya se encuentra registrado."))
+                .when(autenticacionService).registrarCliente(any(RegistroClienteDTO.class));
 
-            when(autenticacionService.iniciarSesion(any(IniciarSesionDTO.class)))
-                    .thenThrow(new BadCredentialsException("Credenciales inválidas"));
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth/registro")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("El email ingresado ya se encuentra registrado."));
+    }
 
-            mockMvc.perform(post("/api/v1/auth/iniciar-sesion")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
-                    .andExpect(status().isUnauthorized())
-                    .andExpect(content().string("Credenciales inválidas. Verifica tu email y contraseña."));
-        }
+    @Test
+    @DisplayName("registrarCliente() - Debe retornar 400 Bad Request cuando la contraseña tiene menos de 8 caracteres")
+    void registrarCliente_conPasswordCorta_retorna400() throws Exception {
+        // Arrange
+        RegistroClienteDTO dto = registroDTO("Franco Guanes", "franco@gutti.com", "123", "1122334455", "Calle 123");
 
-        @Test
-        @DisplayName("Debe retornar 400 Bad Request cuando el email tiene formato incorrecto")
-        void iniciarSesion_EmailFormatoInvalido_Retorna400() throws Exception {
-            IniciarSesionDTO dto = new IniciarSesionDTO();
-            dto.setEmail("email-invalido");
-            dto.setPassword("password123");
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth/registro")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest());
 
-            mockMvc.perform(post("/api/v1/auth/iniciar-sesion")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
-                    .andExpect(status().isBadRequest());
+        verify(autenticacionService, never()).registrarCliente(any());
+    }
 
-            verify(autenticacionService, never()).iniciarSesion(any());
-        }
+    @Test
+    @DisplayName("registrarCliente() - Debe retornar 400 Bad Request cuando faltan campos obligatorios")
+    void registrarCliente_conCamposFaltantes_retorna400() throws Exception {
+        // Arrange
+        RegistroClienteDTO dto = new RegistroClienteDTO();
 
-        @Test
-        @DisplayName("Debe retornar 400 Bad Request cuando los campos son enviados vacíos")
-        void iniciarSesion_CamposVacios_Retorna400() throws Exception {
-            IniciarSesionDTO dto = new IniciarSesionDTO();
-            dto.setEmail("");
-            dto.setPassword("");
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth/registro")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest());
 
-            mockMvc.perform(post("/api/v1/auth/iniciar-sesion")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dto)))
-                    .andExpect(status().isBadRequest());
+        verify(autenticacionService, never()).registrarCliente(any());
+    }
 
-            verify(autenticacionService, never()).iniciarSesion(any());
-        }
+    // ==========================================
+    // POST /api/v1/auth/iniciar-sesion
+    // ==========================================
+
+    @Test
+    @DisplayName("iniciarSesion() - Debe retornar 200 OK con el token cuando las credenciales son correctas")
+    void iniciarSesion_conCredencialesValidas_retorna200ConToken() throws Exception {
+        // Arrange
+        IniciarSesionDTO dto = loginDTO("franco@gutti.com", "12345678");
+        when(autenticacionService.iniciarSesion(any(IniciarSesionDTO.class)))
+                .thenReturn(new AutenticacionRespuestaDTO("token.jwt.valido"));
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth/iniciar-sesion")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("token.jwt.valido"));
+
+        verify(autenticacionService, times(1)).iniciarSesion(any(IniciarSesionDTO.class));
+    }
+
+    @Test
+    @DisplayName("iniciarSesion() - Debe retornar 401 Unauthorized cuando las credenciales son inválidas")
+    void iniciarSesion_conCredencialesInvalidas_retorna401() throws Exception {
+        // Arrange
+        IniciarSesionDTO dto = loginDTO("franco@gutti.com", "passwordIncorrecto");
+        when(autenticacionService.iniciarSesion(any(IniciarSesionDTO.class)))
+                .thenThrow(new BadCredentialsException("Credenciales inválidas"));
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth/iniciar-sesion")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().string("Credenciales inválidas. Verifica tu email y contraseña."));
+    }
+
+    @Test
+    @DisplayName("iniciarSesion() - Debe retornar 400 Bad Request cuando el email tiene formato incorrecto")
+    void iniciarSesion_conEmailFormatoInvalido_retorna400() throws Exception {
+        // Arrange
+        IniciarSesionDTO dto = loginDTO("email-invalido", "password123");
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth/iniciar-sesion")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest());
+
+        verify(autenticacionService, never()).iniciarSesion(any());
+    }
+
+    @Test
+    @DisplayName("iniciarSesion() - Debe retornar 400 Bad Request cuando los campos son enviados vacíos")
+    void iniciarSesion_conCamposVacios_retorna400() throws Exception {
+        // Arrange
+        IniciarSesionDTO dto = loginDTO("", "");
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/auth/iniciar-sesion")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest());
+
+        verify(autenticacionService, never()).iniciarSesion(any());
     }
 }
