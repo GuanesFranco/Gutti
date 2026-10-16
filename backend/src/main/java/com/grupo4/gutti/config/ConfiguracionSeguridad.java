@@ -53,6 +53,9 @@ public class ConfiguracionSeguridad {
                         "/swagger-ui/**",
                         "/swagger-ui.html"
                 ).permitAll()
+                // Gestión de clientes
+                .requestMatchers("/api/v1/clientes/mi-perfil").hasAnyRole("ADMIN", "CLIENTE")
+                .requestMatchers("/api/v1/clientes/**").hasRole("ADMIN")
                 // Gestión de pedidos: creación para clientes y admins, resto solo admins
                 .requestMatchers(HttpMethod.POST, "/api/v1/pedidos").hasAnyRole("ADMIN", "CLIENTE")
                 .requestMatchers("/api/v1/pedidos/**").hasRole("ADMIN")

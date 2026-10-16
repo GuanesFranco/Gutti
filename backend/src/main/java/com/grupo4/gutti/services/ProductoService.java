@@ -13,21 +13,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.transaction.Transactional;
-import jakarta.validation.constraints.NotBlank;
-
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional  // se ejecuta en una sola transacción, si todo sale bien hace el commit a la bd, si hay excepcion no 
-                // controlada ejecuta un rollback, se puede poner (readOnly=true) para optimizar procesos de lectura y despues
-                // en cada metodo que requeiera escritura se vuelve a poner la etiqueta
-
-
+@Transactional
 public class ProductoService {
 
     private final ProductoRepository productoRepository;
-
 
     private ProductoResponse mapearAProductoResponse(Producto producto) {
         return ProductoResponse.builder()
@@ -43,136 +36,106 @@ public class ProductoService {
                 .build();
     }
 
+    private Producto buscarProductoPorId(Long id) {
+        if (id == null) {
+            log.warn("El id es obligatorio");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El campo id es obligatorio");
+        }
+        return productoRepository.findById(id).orElseThrow(() -> {
+            log.warn("El producto consultado no existe");
+            return new ResponseStatusException(HttpStatus.NOT_FOUND, "El producto no existe");
+        });
+    }
 
-    public ProductoResponse crearProducto(ProductoDTO request){
-
-        if(productoRepository.existsByNombre(request.getNombre().trim())){
+    public ProductoResponse crearProducto(ProductoDTO request) {
+        if (productoRepository.existsByNombre(request.getNombre().trim())) {
             log.warn("El producto {} ya existe", request.getNombre());
-            throw new ResponseStatusException(HttpStatus.CONFLICT,"No se puede crear un producto ya existente");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede crear un producto ya existente");
         }
 
-    
         Producto producto = Producto.builder()
-        .nombre(request.getNombre())
-        .descripcion(request.getDescripcion())
-        .categoria(request.getCategoria().name())
-        .precio(request.getPrecio())
-        .stock(request.getStock())
-        .estadoActivo(true) 
-        .build();
+                .nombre(request.getNombre().trim())
+                .descripcion(request.getDescripcion())
+                .categoria(request.getCategoria().name())
+                .precio(request.getPrecio())
+                .stock(request.getStock())
+                .estadoActivo(true)
+                .build();
 
-        Producto ProductoGuardado = productoRepository.save(producto); // lo guardamos en una variable para en el response poder
-                                                                      // conseguir info que se genera automaticamente ej id
+        Producto productoGuardado = productoRepository.save(producto);
 
-        
-        return mapearAProductoResponse(ProductoGuardado);
+        return mapearAProductoResponse(productoGuardado);
     }
 
-    public ProductoResponse obtenerPorId(Long id){
-
-         if(id==null){
-            log.warn("El id es obligatorio");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"El campo id es obligatorio");
-        }
-        // el find by id del repository devuelve un optional <t> si no encuentra nada devuelve un .empty y lanza la excepcion
-        // se realizo el cambio en las funcionalidades por cambio de nombre 
-        Producto ProductoSolicitado = productoRepository.findById(id).orElseThrow(() -> {
-            log.warn("El producto consultado no existe");
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, "El producto no existe");
-        });
-
-        return mapearAProductoResponse(ProductoSolicitado);
+    public ProductoResponse obtenerPorId(Long id) {
+        Producto producto = buscarProductoPorId(id);
+        return mapearAProductoResponse(producto);
     }
 
-    public ModifiedStateProductoResponse eliminarProducto(Long Id){
-        
-       if(Id == null){
-            log.warn("El id es obligatorio");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"El campo id es obligatorio");
+    public ModifiedStateProductoResponse eliminarProducto(Long id) {
+        Producto producto = buscarProductoPorId(id);
+
+        if (!producto.isEstadoActivo()) {
+            log.warn("El producto ya esta inactivo");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El producto ya se encuentra desactivado");
         }
 
-        Producto ProductoSolicitado = productoRepository.findById(Id).orElseThrow(() -> {
-            log.warn("El producto consultado no existe");
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, "El producto no existe");
-        });
+        producto.setEstadoActivo(false);
 
-            if(!ProductoSolicitado.isEstadoActivo()){
-                log.warn("El producto ya esta inactivo");
-                throw new ResponseStatusException(HttpStatus.CONFLICT,"El producto ya se encuentra desactivado");
-            }
-
-            ProductoSolicitado.setEstadoActivo(false);
-
-      return ModifiedStateProductoResponse.builder()
-      .fechaModificacion(ProductoSolicitado.getFechaModificacion())
-      .estadoActivo(ProductoSolicitado.isEstadoActivo())
-      .build();  
+        return ModifiedStateProductoResponse.builder()
+                .fechaModificacion(producto.getFechaModificacion())
+                .estadoActivo(producto.isEstadoActivo())
+                .build();
     }
 
-    public ModifiedStateProductoResponse activarProducto (Long id){
+    public ModifiedStateProductoResponse activarProducto(Long id) {
+        Producto producto = buscarProductoPorId(id);
 
-        // si bien es practicamente igual al delete, lo ideal es tener separada la logica para dar de alta y para eliminar
-        if(id == null){
-            log.warn("El id es obligatorio");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"El campo id es obligatorio");
+        if (producto.isEstadoActivo()) {
+            log.warn("El producto ya esta activo");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El producto ya esta activo");
         }
 
-         Producto ProductoSolicitado = productoRepository.findById(id).orElseThrow(() -> {
-            log.warn("El producto consultado no existe");
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, "El producto no existe");
-        });
+        producto.setEstadoActivo(true);
 
-            if(ProductoSolicitado.isEstadoActivo()){
-                log.warn("El producto ya esta activo");
-                throw new ResponseStatusException(HttpStatus.CONFLICT,"El producto ya esta activo");
-            }
-
-            ProductoSolicitado.setEstadoActivo(true);
-
-      return ModifiedStateProductoResponse.builder()
-      .fechaModificacion(ProductoSolicitado.getFechaModificacion())
-      .estadoActivo(ProductoSolicitado.isEstadoActivo())
-      .build();  
+        return ModifiedStateProductoResponse.builder()
+                .fechaModificacion(producto.getFechaModificacion())
+                .estadoActivo(producto.isEstadoActivo())
+                .build();
     }
 
-    public List<ProductoResponse> filtroProductosDinamico (FilterProductoRequest request){
+    public List<ProductoResponse> filtroProductosDinamico(FilterProductoRequest request) {
+        List<Producto> query = productoRepository.filterQuery(request);
 
-       List<Producto> query = productoRepository.filterQuery(request);
-
-       return query.stream()
+        return query.stream()
                 .map(this::mapearAProductoResponse)
                 .toList();
     }
 
-    public ProductoResponse actualizarProducto (ProductoDTO request, Long id){
-        
-        Producto Actualizar = productoRepository.findById(id).orElseThrow(() -> {
-            log.warn("El producto consultado no existe");
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, "El producto no existe");
-        });
-    
-        if (!request.getNombre().trim().equalsIgnoreCase(Actualizar.getNombre())) {
-        if (productoRepository.existsByNombre(request.getNombre().trim())) {
-            throw new ResponseStatusException(
-                HttpStatus.CONFLICT, "Ya existe otro producto con el nombre: " + request.getNombre()
-            );
-        }
-    }
+    public ProductoResponse actualizarProducto(ProductoDTO request, Long id) {
+        Producto productoAActualizar = buscarProductoPorId(id);
 
-        if(!Actualizar.isEstadoActivo()){
+        if (!request.getNombre().trim().equalsIgnoreCase(productoAActualizar.getNombre())) {
+            if (productoRepository.existsByNombre(request.getNombre().trim())) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT, "Ya existe otro producto con el nombre: " + request.getNombre()
+                );
+            }
+        }
+
+        if (!productoAActualizar.isEstadoActivo()) {
             log.warn("No se puede actualizar un plato inactivo");
-            throw new ResponseStatusException(HttpStatus.CONFLICT,"No se puede actualizar un producto inactivo");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede actualizar un producto inactivo");
         }
 
-        Actualizar.setNombre(request.getNombre().trim());
-        Actualizar.setCategoria(request.getCategoria().name());
-        Actualizar.setPrecio(request.getPrecio());
-        Actualizar.setStock(request.getStock());
-        Actualizar.setDescripcion(request.getDescripcion());
+        productoAActualizar.setNombre(request.getNombre().trim());
+        productoAActualizar.setCategoria(request.getCategoria().name());
+        productoAActualizar.setPrecio(request.getPrecio());
+        productoAActualizar.setStock(request.getStock());
+        productoAActualizar.setDescripcion(request.getDescripcion());
 
-        Producto ProductoGuardado = productoRepository.save(Actualizar);
+        Producto productoGuardado = productoRepository.save(productoAActualizar);
 
-        return mapearAProductoResponse(ProductoGuardado);
+        return mapearAProductoResponse(productoGuardado);
     }
-
 }

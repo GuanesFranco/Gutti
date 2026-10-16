@@ -9,8 +9,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Collections;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
+@DisplayName("Pruebas Unitarias de JwtService")
 class JwtServiceTest {
 
     private JwtService jwtService;
@@ -23,40 +24,57 @@ class JwtServiceTest {
     void setUp() {
         jwtService = new JwtService();
         ReflectionTestUtils.setField(jwtService, "secretKey", SECRET_KEY);
-
-        userDetails = new User("franco@gutti.com", "password", Collections.emptyList());
+        userDetails = userDetailsMock("franco@gutti.com");
     }
 
+    // ==========================================
+    // MÉTODOS HELPER (Para evitar duplicación)
+    // ==========================================
+
+    private UserDetails userDetailsMock(String username) {
+        return new User(username, "password", Collections.emptyList());
+    }
+
+    // ==========================================
+    // PRUEBAS DE GENERACIÓN Y VALIDACIÓN JWT
+    // ==========================================
+
     @Test
-    @DisplayName("Debe generar un token válido y permitir extraer el email correctamente")
-    void generarToken_Y_extraerEmail() {
+    @DisplayName("generarToken() - Debe generar un token válido y permitir extraer el email correctamente")
+    void generarToken_conUserDetailsValido_permiteExtraerEmail() {
+        // Act
         String token = jwtService.generarToken(userDetails);
 
-        assertNotNull(token);
-        assertFalse(token.isBlank());
-
+        // Assert
+        assertThat(token).isNotNull().isNotBlank();
         String emailExtraido = jwtService.extraerEmail(token);
-        assertEquals("franco@gutti.com", emailExtraido);
+        assertThat(emailExtraido).isEqualTo("franco@gutti.com");
     }
 
     @Test
-    @DisplayName("Debe retornar true cuando el token corresponde al usuario y no está expirado")
-    void esTokenValido_ConUsuarioCorrecto_RetornaTrue() {
+    @DisplayName("esTokenValido() - Debe retornar true cuando el token corresponde al usuario y no está expirado")
+    void esTokenValido_conUsuarioCorrecto_retornaTrue() {
+        // Arrange
         String token = jwtService.generarToken(userDetails);
 
+        // Act
         boolean esValido = jwtService.esTokenValido(token, userDetails);
 
-        assertTrue(esValido);
+        // Assert
+        assertThat(esValido).isTrue();
     }
 
     @Test
-    @DisplayName("Debe retornar false cuando el token no coincide con el usuario proporcionado")
-    void esTokenValido_ConUsuarioDiferente_RetornaFalse() {
+    @DisplayName("esTokenValido() - Debe retornar false cuando el token no coincide con el usuario proporcionado")
+    void esTokenValido_conUsuarioDiferente_retornaFalse() {
+        // Arrange
         String token = jwtService.generarToken(userDetails);
-        UserDetails otroUsuario = new User("otro@gutti.com", "password", Collections.emptyList());
+        UserDetails otroUsuario = userDetailsMock("otro@gutti.com");
 
+        // Act
         boolean esValido = jwtService.esTokenValido(token, otroUsuario);
 
-        assertFalse(esValido);
+        // Assert
+        assertThat(esValido).isFalse();
     }
 }

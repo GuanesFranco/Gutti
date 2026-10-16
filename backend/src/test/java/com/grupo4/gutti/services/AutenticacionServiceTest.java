@@ -5,9 +5,7 @@ import com.grupo4.gutti.dtos.IniciarSesionDTO;
 import com.grupo4.gutti.dtos.RegistroClienteDTO;
 import com.grupo4.gutti.models.Usuario;
 import com.grupo4.gutti.repositories.UsuarioRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -23,11 +21,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("Pruebas Unitarias de AutenticacionService")
 class AutenticacionServiceTest {
 
     @Mock
@@ -45,132 +45,136 @@ class AutenticacionServiceTest {
     @InjectMocks
     private AutenticacionService autenticacionService;
 
-    private RegistroClienteDTO registroDTO;
-    private IniciarSesionDTO loginDTO;
-    private Usuario usuarioMock;
+    // ==========================================
+    // MÉTODOS HELPER (Para evitar duplicación)
+    // ==========================================
 
-    @BeforeEach
-    void setUp() {
-        registroDTO = new RegistroClienteDTO();
-        registroDTO.setNombre("Franco Guanes");
-        registroDTO.setEmail("franco@gutti.com");
-        registroDTO.setPassword("password123");
-        registroDTO.setTelefono("1122334455");
-        registroDTO.setDireccion("Av. Siempre Viva 123");
+    private RegistroClienteDTO registroDTO(String nombre, String email, String password, String telefono, String direccion) {
+        RegistroClienteDTO dto = new RegistroClienteDTO();
+        dto.setNombre(nombre);
+        dto.setEmail(email);
+        dto.setPassword(password);
+        dto.setTelefono(telefono);
+        dto.setDireccion(direccion);
+        return dto;
+    }
 
-        loginDTO = new IniciarSesionDTO();
-        loginDTO.setEmail("franco@gutti.com");
-        loginDTO.setPassword("password123");
+    private IniciarSesionDTO loginDTO(String email, String password) {
+        IniciarSesionDTO dto = new IniciarSesionDTO();
+        dto.setEmail(email);
+        dto.setPassword(password);
+        return dto;
+    }
 
-        usuarioMock = Usuario.builder()
+    private Usuario usuarioMock(String nombre, String email, String rol) {
+        return Usuario.builder()
                 .id(UUID.randomUUID())
-                .nombre("Franco Guanes")
-                .email("franco@gutti.com")
-                .passwordHash("hashedPassword")
-                .rol("CLIENTE")
+                .nombre(nombre)
+                .email(email)
+                .passwordHash("passwordEncriptado")
+                .rol(rol)
                 .build();
     }
 
-    @Nested
-    @DisplayName("Pruebas del método registrarCliente()")
-    class RegistrarClienteTests {
+    // ==========================================
+    // REGISTRAR CLIENTE
+    // ==========================================
 
-        @Test
-        @DisplayName("Debe registrar un cliente exitosamente cuando el email no existe")
-        void registrarCliente_Exitoso() {
-            // Arrange
-            when(usuarioRepository.existsByEmail(registroDTO.getEmail())).thenReturn(false);
-            when(passwordEncoder.encode(registroDTO.getPassword())).thenReturn("encodedPassword123");
+    @Test
+    @DisplayName("registrarCliente() - Debe guardar el usuario con contraseña hasheada y rol CLIENTE")
+    void registrarCliente_conDatosValidos_guardaUsuarioCorrectamente() {
+        // Arrange
+        RegistroClienteDTO dto = registroDTO("Franco Guanes", "franco@gutti.com", "password123", "1122334455", "Av. Siempre Viva 123");
+        when(usuarioRepository.existsByEmail("franco@gutti.com")).thenReturn(false);
+        when(passwordEncoder.encode("password123")).thenReturn("hashSeguro123");
 
-            // Act
-            autenticacionService.registrarCliente(registroDTO);
+        // Act
+        autenticacionService.registrarCliente(dto);
 
-            // Assert
-            ArgumentCaptor<Usuario> usuarioCaptor = ArgumentCaptor.forClass(Usuario.class);
-            verify(usuarioRepository, times(1)).save(usuarioCaptor.capture());
+        // Assert
+        ArgumentCaptor<Usuario> usuarioCaptor = ArgumentCaptor.forClass(Usuario.class);
+        verify(usuarioRepository, times(1)).save(usuarioCaptor.capture());
 
-            Usuario usuarioGuardado = usuarioCaptor.getValue();
-            assertEquals("Franco Guanes", usuarioGuardado.getNombre());
-            assertEquals("franco@gutti.com", usuarioGuardado.getEmail());
-            assertEquals("encodedPassword123", usuarioGuardado.getPasswordHash());
-            assertEquals("CLIENTE", usuarioGuardado.getRol());
-
-            assertNotNull(usuarioGuardado.getCliente());
-            assertEquals("1122334455", usuarioGuardado.getCliente().getTelefono());
-            assertEquals("Av. Siempre Viva 123", usuarioGuardado.getCliente().getDireccion());
-            assertEquals(usuarioGuardado, usuarioGuardado.getCliente().getUsuario());
-        }
-
-        @Test
-        @DisplayName("Debe lanzar IllegalArgumentException cuando el email ya está en uso")
-        void registrarCliente_EmailDuplicado_LanzaExcepcion() {
-            // Arrange
-            when(usuarioRepository.existsByEmail(registroDTO.getEmail())).thenReturn(true);
-
-            // Act & Assert
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
-                    autenticacionService.registrarCliente(registroDTO)
-            );
-
-            assertEquals("El email ingresado ya se encuentra registrado.", ex.getMessage());
-            verify(usuarioRepository, never()).save(any());
-            verify(passwordEncoder, never()).encode(any());
-        }
+        Usuario guardado = usuarioCaptor.getValue();
+        assertThat(guardado.getNombre()).isEqualTo("Franco Guanes");
+        assertThat(guardado.getEmail()).isEqualTo("franco@gutti.com");
+        assertThat(guardado.getPasswordHash()).isEqualTo("hashSeguro123");
+        assertThat(guardado.getRol()).isEqualTo("CLIENTE");
+        assertThat(guardado.getCliente()).isNotNull();
+        assertThat(guardado.getCliente().getTelefono()).isEqualTo("1122334455");
+        assertThat(guardado.getCliente().getDireccion()).isEqualTo("Av. Siempre Viva 123");
     }
 
-    @Nested
-    @DisplayName("Pruebas del método iniciarSesion()")
-    class IniciarSesionTests {
+    @Test
+    @DisplayName("registrarCliente() - Debe lanzar IllegalArgumentException si el email ya existe")
+    void registrarCliente_conEmailDuplicado_lanzaIllegalArgumentException() {
+        // Arrange
+        RegistroClienteDTO dto = registroDTO("Franco Guanes", "franco@gutti.com", "password123", "1122334455", "Av. Siempre Viva 123");
+        when(usuarioRepository.existsByEmail("franco@gutti.com")).thenReturn(true);
 
-        @Test
-        @DisplayName("Debe iniciar sesión y retornar token JWT cuando las credenciales son válidas")
-        void iniciarSesion_Exitoso() {
-            // Arrange
-            String tokenEsperado = "jwt.token.de.prueba";
-            when(usuarioRepository.findByEmail(loginDTO.getEmail())).thenReturn(Optional.of(usuarioMock));
-            when(jwtService.generarToken(any(UserDetails.class))).thenReturn(tokenEsperado);
+        // Act & Assert
+        assertThatThrownBy(() -> autenticacionService.registrarCliente(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("El email ingresado ya se encuentra registrado.");
 
-            // Act
-            AutenticacionRespuestaDTO respuesta = autenticacionService.iniciarSesion(loginDTO);
+        verify(usuarioRepository, never()).save(any(Usuario.class));
+    }
 
-            // Assert
-            assertNotNull(respuesta);
-            assertEquals(tokenEsperado, respuesta.getToken());
-            verify(authenticationManager, times(1))
-                    .authenticate(any(UsernamePasswordAuthenticationToken.class));
-            verify(usuarioRepository, times(1)).findByEmail(loginDTO.getEmail());
-            verify(jwtService, times(1)).generarToken(any(UserDetails.class));
-        }
+    // ==========================================
+    // INICIAR SESIÓN
+    // ==========================================
 
-        @Test
-        @DisplayName("Debe propagar BadCredentialsException cuando las credenciales son incorrectas")
-        void iniciarSesion_CredencialesInvalidas_LanzaBadCredentialsException() {
-            // Arrange
-            when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                    .thenThrow(new BadCredentialsException("Credenciales inválidas"));
+    @Test
+    @DisplayName("iniciarSesion() - Debe autenticar y retornar token JWT cuando credenciales son válidas")
+    void iniciarSesion_conCredencialesValidas_retornaTokenJwt() {
+        // Arrange
+        IniciarSesionDTO dto = loginDTO("franco@gutti.com", "password123");
+        Usuario usuario = usuarioMock("Franco Guanes", "franco@gutti.com", "CLIENTE");
 
-            // Act & Assert
-            assertThrows(BadCredentialsException.class, () ->
-                    autenticacionService.iniciarSesion(loginDTO)
-            );
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenReturn(null);
+        when(usuarioRepository.findByEmail("franco@gutti.com")).thenReturn(Optional.of(usuario));
+        when(jwtService.generarToken(any(UserDetails.class))).thenReturn("token.jwt.generado");
 
-            verify(usuarioRepository, never()).findByEmail(any());
-            verify(jwtService, never()).generarToken(any());
-        }
+        // Act
+        AutenticacionRespuestaDTO respuesta = autenticacionService.iniciarSesion(dto);
 
-        @Test
-        @DisplayName("Debe lanzar IllegalArgumentException si el usuario no existe tras la autenticación")
-        void iniciarSesion_UsuarioNoEncontrado_LanzaExcepcion() {
-            // Arrange
-            when(usuarioRepository.findByEmail(loginDTO.getEmail())).thenReturn(Optional.empty());
+        // Assert
+        assertThat(respuesta).isNotNull();
+        assertThat(respuesta.getToken()).isEqualTo("token.jwt.generado");
+        verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(jwtService, times(1)).generarToken(any(UserDetails.class));
+    }
 
-            // Act & Assert
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
-                    autenticacionService.iniciarSesion(loginDTO)
-            );
+    @Test
+    @DisplayName("iniciarSesion() - Debe lanzar BadCredentialsException cuando las credenciales son incorrectas")
+    void iniciarSesion_conPasswordIncorrecto_lanzaBadCredentialsException() {
+        // Arrange
+        IniciarSesionDTO dto = loginDTO("franco@gutti.com", "passwordIncorrecto");
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new BadCredentialsException("Bad credentials"));
 
-            assertEquals("Usuario no encontrado.", ex.getMessage());
-            verify(jwtService, never()).generarToken(any());
-        }
+        // Act & Assert
+        assertThatThrownBy(() -> autenticacionService.iniciarSesion(dto))
+                .isInstanceOf(BadCredentialsException.class);
+
+        verify(jwtService, never()).generarToken(any());
+    }
+
+    @Test
+    @DisplayName("iniciarSesion() - Debe lanzar IllegalArgumentException cuando el usuario no existe")
+    void iniciarSesion_conUsuarioInexistente_lanzaIllegalArgumentException() {
+        // Arrange
+        IniciarSesionDTO dto = loginDTO("noexiste@gutti.com", "password123");
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenReturn(null);
+        when(usuarioRepository.findByEmail("noexiste@gutti.com")).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> autenticacionService.iniciarSesion(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Usuario no encontrado.");
+
+        verify(jwtService, never()).generarToken(any());
     }
 }

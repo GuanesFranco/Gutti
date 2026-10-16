@@ -1,11 +1,13 @@
 package com.grupo4.gutti.config;
 
 import com.grupo4.gutti.services.JwtService;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +21,7 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class FiltroAutenticacionJwt extends OncePerRequestFilter {
 
     private final JwtService jwtService;
@@ -37,21 +40,25 @@ public class FiltroAutenticacionJwt extends OncePerRequestFilter {
             return;
         }
 
-        // Extraer token y email
+        // Extraer token y procesar autenticación
         jwt = authHeader.substring(7);
-        emailUsuario = jwtService.extraerEmail(jwt);
+        try {
+            emailUsuario = jwtService.extraerEmail(jwt);
 
-        // Si hay email y el usuario no está autenticado en el contexto actual
-        if (emailUsuario != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(emailUsuario);
+            // Si hay email y el usuario no está autenticado en el contexto actual
+            if (emailUsuario != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(emailUsuario);
 
-            // Si el token es válido, creamos el token de autenticación para Spring Security
-            if (jwtService.esTokenValido(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                // Actualizamos el contexto de seguridad
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                // Si el token es válido, creamos el token de autenticación para Spring Security
+                if (jwtService.esTokenValido(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    // Actualizamos el contexto de seguridad
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
+        } catch (JwtException | IllegalArgumentException e) {
+            log.warn("Token JWT inválido o expirado: {}", e.getMessage());
         }
         
         filterChain.doFilter(request, response);
