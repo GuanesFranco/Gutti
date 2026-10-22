@@ -42,11 +42,7 @@ public class ProductoController {
     private final ProductoService service;
 
 
-/**
- * @param id
- * 
- */
-@GetMapping("obtenerPorId/{id}")
+    @GetMapping("obtenerPorId/{id}")
 @ApiResponses(value = {
     @ApiResponse(
         responseCode = "200", 
@@ -79,11 +75,7 @@ public ProductoResponse obtenerPorId(@PathVariable Long id) {
 // getmapping si no tiene problemas devuelve 200, sino se puede hacer devolviendo un
 // ResponseEntity<ProductoResponse> y en el return se pone ResponseEntity.codigoestado(Producto)
 
- /**
- * @param dto
- * 
- */
-@PostMapping("/crearProducto")
+    @PostMapping("/crearProducto")
 @ResponseStatus(HttpStatus.CREATED)
 @ApiResponses(value = {
     @ApiResponse(
@@ -115,12 +107,7 @@ public ProductoResponse crearProducto(@Valid @RequestBody ProductoDTO dto){
 
 }
 
-/**
- * @param id
- * 
- */
-
-@DeleteMapping("/eliminarProducto/{id}")
+    @DeleteMapping("/eliminarProducto/{id}")
 
 
 @ApiResponses(value = {
@@ -162,12 +149,7 @@ public ModifiedStateProductoResponse eliminarProducto(@PathVariable Long id){
     return service.eliminarProducto(id);
 }
 
-/**
- * @param id
- * 
- */
-
-@PatchMapping ("/activarProducto/{id}")
+    @PatchMapping("/activarProducto/{id}")
 
 @ApiResponses(value = {
     @ApiResponse(
@@ -209,11 +191,7 @@ public ModifiedStateProductoResponse activarProducto(@PathVariable Long id){
 }
     
 
-/**
- * @param filtros
- * 
- */
-@GetMapping("/consultarproductos") 
+    @GetMapping("/consultarproductos") 
 @ApiResponse(
     responseCode = "200", 
     description = "Productos recuperados exitosamente.", 
@@ -227,12 +205,7 @@ public List<ProductoResponse> filtroProductos(@ParameterObject FilterProductoReq
     return service.filtroProductosDinamico(request);
 }
 
-/**
- * @param DTO
- * 
- */
-
-@PutMapping ("/modificarProducto/{id}")
+    @PutMapping("/modificarProducto/{id}")
 @ApiResponses(value = {
     @ApiResponse(
         responseCode = "200", 
