@@ -1,0 +1,12 @@
+[
+  { "nombre": "Café Expreso", "categoria": "INFUSIONES", "precio": 3800, "stock": 100, "descripcion": "Taza chica" },
+  { "nombre": "Tostado de Miga", "categoria": "SANGUCHES", "precio": 6500, "stock": 30, "descripcion": "Jamón y queso en pan de miga" },
+  { "nombre": "Porción Chocotorta", "categoria": "TORTAS", "precio": 6000, "stock": 15, "descripcion": "Casera" },
+  { "nombre": "Churro (unidad)", "categoria": "TORTAS", "precio": 900, "stock": 120, "descripcion": "Con azúcar, recién hecho" },
+  { "nombre": "Churro relleno de dulce de leche (unidad)", "categoria": "TORTAS", "precio": 1300, "stock": 80, "descripcion": "Relleno al momento" },
+  { "nombre": "Medialuna de manteca (unidad)", "categoria": "TORTAS", "precio": 800, "stock": 120, "descripcion": "Recién horneada" },
+  { "nombre": "Chipá (unidad)", "categoria": "SANGUCHES", "precio": 500, "stock": 100, "descripcion": "Pan de queso calentito" },
+  { "nombre": "Helado de dulce de leche granizado 1/4 kg", "categoria": "HELADOS", "precio": 8000, "stock": 20, "descripcion": "Dulce de leche con trocitos de galletita" },
+  { "nombre": "Helado de frutos rojos 1/4 kg", "categoria": "HELADOS", "precio": 8000, "stock": 20, "descripcion": "Crema con salsa de frutos rojos" },
+  { "nombre": "Helado de menta granizada 1/4 kg", "categoria": "HELADOS", "precio": 8000, "stock": 20, "descripcion": "Menta con chocolate" }
+]
