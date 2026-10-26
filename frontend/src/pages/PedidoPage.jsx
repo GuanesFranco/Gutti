@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { obtenerMiPerfil } from '../api/clientes.js';
 import { crearPedido, modificarPedido, obtenerPedido } from '../api/pedidos.js';
 import { useAuth } from '../auth/AuthContext.jsx';
@@ -12,21 +12,38 @@ import useCarga from '../hooks/useCarga.js';
 import useProductosActivos from '../hooks/useProductosActivos.js';
 import { ROL } from '../utils/dominio.js';
 import { formatearPesos } from '../utils/formato.js';
-import { armarEntrega, carritoDePedido } from '../utils/pedido.js';
+import { prepararFormulario } from '../utils/pedido.js';
 import { RUTAS } from '../utils/rutas.js';
 
 const AVISO_PRODUCTO_FALTANTE = 'Algún producto de este pedido ya no está activo: revisá el pedido antes de guardar.';
 
+function elegirTitulo(id, esAdmin) {
+  if (id) {
+    return `Editar pedido #${id}`;
+  }
+  return esAdmin ? 'Nuevo pedido' : 'Hacer un pedido';
+}
+
+function elegirTextoConfirmar(id, estaAutenticado) {
+  if (id) {
+    return 'Guardar cambios';
+  }
+  return estaAutenticado ? 'Confirmar pedido' : 'Ingresar para confirmar';
+}
+
 export default function PedidoPage() {
   const { id } = useParams();
-  const esCliente = useAuth().rol === ROL.CLIENTE;
+  const { estaAutenticado, rol } = useAuth();
+  const esAdmin = rol === ROL.ADMIN;
+  const esCliente = estaAutenticado && !esAdmin;
+  const ubicacion = useLocation();
+  const [borrador, setBorrador] = useState(ubicacion.state?.borrador);
   const navigate = useNavigate();
   const notificar = useNotificar();
   const catalogo = useProductosActivos();
   const [confirmado, setConfirmado] = useState(null);
-  const [vuelta, setVuelta] = useState(0);
+  const [numeroDeFormulario, setNumeroDeFormulario] = useState(0);
   const cargarDatos = useCallback(async () => {
-    // Si el cliente todavía no tiene perfil, el pedido arranca con los datos de entrega vacíos.
     const [pedido, perfil] = await Promise.all([
       id ? obtenerPedido(id) : null,
       esCliente ? obtenerMiPerfil().catch(() => null) : null,
@@ -35,9 +52,14 @@ export default function PedidoPage() {
   }, [id, esCliente]);
   const { datos, error, recargar } = useCarga(cargarDatos);
 
-  async function guardar(pedido) {
+  // Sin cuenta se puede armar el pedido; para confirmarlo hay que ingresar.
+  async function guardar(pedido, armado) {
+    if (!estaAutenticado) {
+      navigate(RUTAS.LOGIN, { state: { volverA: { ruta: RUTAS.NUEVO_PEDIDO, estado: { borrador: armado } } } });
+      return;
+    }
     const guardado = id ? await modificarPedido(id, pedido) : await crearPedido(pedido);
-    if (esCliente) {
+    if (!esAdmin) {
       setConfirmado(guardado);
       return;
     }
@@ -46,8 +68,10 @@ export default function PedidoPage() {
   }
 
   function hacerOtroPedido() {
+    navigate(RUTAS.NUEVO_PEDIDO, { replace: true });
+    setBorrador(null);
     setConfirmado(null);
-    setVuelta((numero) => numero + 1);
+    setNumeroDeFormulario((numero) => numero + 1);
     catalogo.recargar();
   }
 
@@ -56,25 +80,22 @@ export default function PedidoPage() {
   }
 
   const listo = datos && catalogo.productos;
-  const carritoInicial = listo && datos.pedido ? carritoDePedido(datos.pedido, catalogo.productos) : {};
-  const faltanProductos = listo && datos.pedido && Object.keys(carritoInicial).length < datos.pedido.items.length;
-  const datosPerfil = datos?.perfil && { nombreCliente: datos.perfil.nombre, telefono: datos.perfil.telefono };
-  const tituloNuevo = esCliente ? 'Hacer un pedido' : 'Nuevo pedido';
+  const inicial = listo && prepararFormulario({ ...datos, borrador, productos: catalogo.productos });
 
   return (
     <>
-      <Encabezado titulo={id ? `Editar pedido #${id}` : tituloNuevo} />
+      <Encabezado titulo={elegirTitulo(id, esAdmin)} />
       <Aviso error={error} alReintentar={recargar} />
       {!catalogo.productos && <Aviso error={catalogo.error} alReintentar={catalogo.recargar} />}
       {listo && (
         <FormularioPedido
-          key={`${id}-${vuelta}`}
+          key={`${id}-${numeroDeFormulario}`}
           catalogo={catalogo}
-          esCliente={esCliente}
-          editando={Boolean(id)}
-          entregaInicial={armarEntrega(datos.pedido || datosPerfil)}
-          carritoInicial={carritoInicial}
-          avisoInicial={faltanProductos ? AVISO_PRODUCTO_FALTANTE : ''}
+          esCliente={!esAdmin}
+          textoConfirmar={elegirTextoConfirmar(id, estaAutenticado)}
+          entregaInicial={inicial.entrega}
+          carritoInicial={inicial.carrito}
+          avisoInicial={inicial.faltanProductos ? AVISO_PRODUCTO_FALTANTE : ''}
           alGuardar={guardar}
         />
       )}

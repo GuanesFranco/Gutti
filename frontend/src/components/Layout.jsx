@@ -19,7 +19,10 @@ const ENLACES = {
   ],
 };
 
-const ENLACES_SIN_SESION = [{ ruta: RUTAS.CATALOGO, texto: 'Catálogo' }];
+const ENLACES_SIN_SESION = [
+  { ruta: RUTAS.CATALOGO, texto: 'Catálogo' },
+  { ruta: RUTAS.NUEVO_PEDIDO, texto: 'Hacer un pedido' },
+];
 
 export default function Layout() {
   const { estaAutenticado, rol, email, cerrarSesion } = useAuth();

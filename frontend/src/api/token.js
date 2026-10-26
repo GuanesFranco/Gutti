@@ -2,30 +2,34 @@ const CLAVE_TOKEN = 'gutti_token';
 const CLAVE_ROL = 'gutti_rol';
 const MILISEGUNDOS_POR_SEGUNDO = 1000;
 
+// La sesión dura lo que la pestaña: al cerrarla se pierde el token.
 export function guardarToken(token) {
-  localStorage.setItem(CLAVE_TOKEN, token);
+  sessionStorage.setItem(CLAVE_TOKEN, token);
 }
 
 export function guardarRol(rol) {
-  localStorage.setItem(CLAVE_ROL, rol);
+  sessionStorage.setItem(CLAVE_ROL, rol);
 }
 
 export function obtenerToken() {
-  return localStorage.getItem(CLAVE_TOKEN);
+  return sessionStorage.getItem(CLAVE_TOKEN);
 }
 
 export function obtenerRol() {
-  return localStorage.getItem(CLAVE_ROL);
+  return sessionStorage.getItem(CLAVE_ROL);
 }
 
 export function borrarSesion() {
-  localStorage.removeItem(CLAVE_TOKEN);
-  localStorage.removeItem(CLAVE_ROL);
+  sessionStorage.removeItem(CLAVE_TOKEN);
+  sessionStorage.removeItem(CLAVE_ROL);
 }
 
+// El JWT trae los datos en la parte del medio, en base64.
 function leerToken(token) {
   try {
-    return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const datos = token.split('.')[1];
+    const base64 = datos.replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(base64));
   } catch {
     return null;
   }

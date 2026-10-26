@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { registrarCliente } from '../api/auth.js';
 import Aviso from '../components/Aviso.jsx';
 import Campo from '../components/Campo.jsx';
@@ -9,13 +9,14 @@ import { RUTAS } from '../utils/rutas.js';
 
 export default function RegistroPage() {
   const navigate = useNavigate();
+  const ubicacion = useLocation();
   const { valores, cambiar } = useFormulario({ nombre: '', email: '', password: '', telefono: '', direccion: '' });
   const { enviar, enviando, error } = useEnvio();
 
   async function registrar(evento) {
     evento.preventDefault();
     if (await enviar(() => registrarCliente({ ...valores, email: valores.email.trim() }))) {
-      navigate(RUTAS.LOGIN, { state: { registrado: true } });
+      navigate(RUTAS.LOGIN, { state: { ...ubicacion.state, registrado: true } });
     }
   }
 
@@ -45,7 +46,10 @@ export default function RegistroPage() {
         </button>
       </form>
       <p className="acceso-alternativa">
-        ¿Ya tenés cuenta? <Link to={RUTAS.LOGIN}>Ingresar</Link>
+        ¿Ya tenés cuenta?{' '}
+        <Link to={RUTAS.LOGIN} state={ubicacion.state}>
+          Ingresar
+        </Link>
       </p>
     </PantallaAcceso>
   );

@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   armarEntrega,
+  calcularTotal,
   cambiarCantidad,
   carritoDePedido,
   itemsDelCarrito,
   lineasDelCarrito,
+  prepararFormulario,
 } from '../src/utils/pedido.js';
 
 const CAFE = { id: 1, nombre: 'Café', precio: 2500, stock: 3 };
@@ -30,6 +32,14 @@ describe('cambiarCantidad', () => {
     const original = { 1: { producto: CAFE, cantidad: 1 } };
     cambiarCantidad(original, TOSTADO, 1);
     expect(original).toEqual({ 1: { producto: CAFE, cantidad: 1 } });
+  });
+});
+
+describe('calcularTotal', () => {
+  it('suma precio por cantidad para mostrar el total mientras se arma el pedido', () => {
+    const carrito = { 1: { producto: CAFE, cantidad: 2 }, 2: { producto: TOSTADO, cantidad: 1 } };
+    expect(calcularTotal(carrito)).toBe(9500);
+    expect(calcularTotal({})).toBe(0);
   });
 });
 
@@ -64,5 +74,26 @@ describe('armarEntrega', () => {
   it('toma los datos de un pedido, cambiando null por texto vacío', () => {
     const pedido = { tipoDeEntrega: 'DELIVERY', nombreCliente: null, telefono: '1122' };
     expect(armarEntrega(pedido)).toEqual({ tipoDeEntrega: 'DELIVERY', nombreCliente: '', telefono: '1122' });
+  });
+});
+
+describe('prepararFormulario', () => {
+  it('con un pedido armado sin cuenta, lo retoma tal cual', () => {
+    const borrador = { entrega: armarEntrega(undefined), carrito: { 1: { producto: CAFE, cantidad: 2 } } };
+    expect(prepararFormulario({ borrador, productos: [CAFE] })).toEqual({ ...borrador, faltanProductos: false });
+  });
+
+  it('al editar, avisa si algún producto del pedido ya no está activo', () => {
+    const pedido = { tipoDeEntrega: 'MOSTRADOR', items: [{ nombreProducto: 'Churros', cantidad: 1 }] };
+    expect(prepararFormulario({ pedido, productos: [CAFE] }).faltanProductos).toBe(true);
+  });
+
+  it('en un pedido nuevo, toma el nombre y el teléfono del perfil', () => {
+    const perfil = { nombre: 'Ana', telefono: '1122' };
+    expect(prepararFormulario({ perfil, productos: [CAFE] }).entrega).toEqual({
+      tipoDeEntrega: 'MOSTRADOR',
+      nombreCliente: 'Ana',
+      telefono: '1122',
+    });
   });
 });

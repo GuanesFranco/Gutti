@@ -11,7 +11,7 @@ import { crearToken, segundosDesdeAhora } from './ayudantes.js';
 const SEGUNDOS_POR_HORA = 3600;
 
 function iniciarSesionComo(rol) {
-  guardarToken(crearToken({ sub: 'prueba@gutti.com', exp: segundosDesdeAhora(SEGUNDOS_POR_HORA) }));
+  guardarToken(crearToken({ sub: 'usuario@example.com', exp: segundosDesdeAhora(SEGUNDOS_POR_HORA) }));
   guardarRol(rol);
 }
 
@@ -38,7 +38,7 @@ function mostrarPantallaDeAdmin() {
 
 describe('RutaProtegida', () => {
   beforeEach(() => {
-    localStorage.clear();
+    sessionStorage.clear();
   });
 
   afterEach(cleanup);

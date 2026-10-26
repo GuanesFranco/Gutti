@@ -1,18 +1,18 @@
 import { useState } from 'react';
 import useEnvio from '../hooks/useEnvio.js';
-import { cambiarCantidad, itemsDelCarrito, lineasDelCarrito } from '../utils/pedido.js';
+import { calcularTotal, cambiarCantidad, itemsDelCarrito, lineasDelCarrito } from '../utils/pedido.js';
 import Aviso from './Aviso.jsx';
 import DatosEntrega from './DatosEntrega.jsx';
 import FiltrosProductos from './FiltrosProductos.jsx';
 import LineasPedido from './LineasPedido.jsx';
 import SelectorProductos from './SelectorProductos.jsx';
-import Ticket from './Ticket.jsx';
+import Ticket, { TotalTicket } from './Ticket.jsx';
 
-// El total, el stock y las validaciones del pedido los resuelve el backend.
+// El total es solo para mostrar: el definitivo lo calcula el backend.
 export default function FormularioPedido({
   catalogo,
   esCliente,
-  editando,
+  textoConfirmar,
   entregaInicial,
   carritoInicial = {},
   avisoInicial = '',
@@ -36,8 +36,8 @@ export default function FormularioPedido({
   }
 
   async function confirmar() {
-    const guardado = await enviar(() => alGuardar({ ...entrega, items: itemsDelCarrito(carrito) }));
-    if (!guardado) {
+    const pedido = { ...entrega, items: itemsDelCarrito(carrito) };
+    if (!(await enviar(() => alGuardar(pedido, { carrito, entrega })))) {
       catalogo.recargar();
     }
   }
@@ -60,7 +60,7 @@ export default function FormularioPedido({
           cabecera={<DatosEntrega entrega={entrega} esCliente={esCliente} alCambiar={cambiarEntrega} />}
           pie={
             <>
-              <p className="texto-suave">El total lo calcula el sistema al confirmar.</p>
+              <TotalTicket monto={calcularTotal(carrito)} />
               <Aviso error={error} />
               <button
                 type="button"
@@ -68,7 +68,7 @@ export default function FormularioPedido({
                 disabled={enviando || lineas.length === 0}
                 onClick={confirmar}
               >
-                {enviando ? 'Guardando…' : editando ? 'Guardar cambios' : 'Confirmar pedido'}
+                {enviando ? 'Guardando…' : textoConfirmar}
               </button>
             </>
           }

@@ -6,7 +6,7 @@ const SEGUNDOS_POR_HORA = 3600;
 
 describe('token', () => {
   it('lee el email del token', () => {
-    expect(obtenerEmail(crearToken({ sub: 'admin@gutti.com' }))).toBe('admin@gutti.com');
+    expect(obtenerEmail(crearToken({ sub: 'usuario@example.com' }))).toBe('usuario@example.com');
   });
 
   it('detecta un token vencido', () => {

@@ -1,6 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext.jsx';
-import { ROL } from './utils/dominio.js';
 import RutaProtegida from './auth/RutaProtegida.jsx';
 import RutaSinSesion from './auth/RutaSinSesion.jsx';
 import Layout from './components/Layout.jsx';
@@ -8,10 +7,11 @@ import CatalogoPage from './pages/CatalogoPage.jsx';
 import ClientesPage from './pages/ClientesPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import PedidoPage from './pages/PedidoPage.jsx';
-import PerfilPage from './pages/PerfilPage.jsx';
 import PedidosPage from './pages/PedidosPage.jsx';
+import PerfilPage from './pages/PerfilPage.jsx';
 import ProductosAdminPage from './pages/ProductosAdminPage.jsx';
 import RegistroPage from './pages/RegistroPage.jsx';
+import { ROL } from './utils/dominio.js';
 import { RUTAS } from './utils/rutas.js';
 
 function Inicio() {
@@ -19,7 +19,8 @@ function Inicio() {
   if (!estaAutenticado) {
     return <Navigate to={RUTAS.CATALOGO} replace />;
   }
-  return <Navigate to={rol === ROL.ADMIN ? RUTAS.PEDIDOS : RUTAS.NUEVO_PEDIDO} replace />;
+  const esAdmin = rol === ROL.ADMIN;
+  return <Navigate to={esAdmin ? RUTAS.PEDIDOS : RUTAS.NUEVO_PEDIDO} replace />;
 }
 
 export default function App() {
@@ -60,14 +61,7 @@ export default function App() {
             </RutaProtegida>
           }
         />
-        <Route
-          path={RUTAS.NUEVO_PEDIDO}
-          element={
-            <RutaProtegida>
-              <PedidoPage />
-            </RutaProtegida>
-          }
-        />
+        <Route path={RUTAS.NUEVO_PEDIDO} element={<PedidoPage />} />
         <Route
           path={RUTAS.CLIENTES}
           element={

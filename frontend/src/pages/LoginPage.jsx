@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext.jsx';
 import Aviso from '../components/Aviso.jsx';
 import Campo from '../components/Campo.jsx';
@@ -9,16 +9,13 @@ import { RUTAS } from '../utils/rutas.js';
 
 export default function LoginPage() {
   const { ingresar, aviso } = useAuth();
-  const navigate = useNavigate();
   const ubicacion = useLocation();
   const { valores, cambiar } = useFormulario({ email: '', password: '' });
   const { enviar, enviando, error } = useEnvio();
 
   async function iniciar(evento) {
     evento.preventDefault();
-    if (await enviar(() => ingresar(valores.email.trim(), valores.password))) {
-      navigate(RUTAS.INICIO, { replace: true });
-    }
+    await enviar(() => ingresar(valores.email.trim(), valores.password));
   }
 
   return (
@@ -37,8 +34,11 @@ export default function LoginPage() {
         </button>
       </form>
       <p className="acceso-alternativa">
-        ¿Primera vez? <Link to={RUTAS.REGISTRO}>Crear una cuenta</Link> ·{' '}
-        <Link to={RUTAS.CATALOGO}>Ver el catálogo</Link>
+        ¿Primera vez?{' '}
+        <Link to={RUTAS.REGISTRO} state={ubicacion.state}>
+          Crear una cuenta
+        </Link>{' '}
+        · <Link to={RUTAS.CATALOGO}>Ver el catálogo</Link>
       </p>
     </PantallaAcceso>
   );
