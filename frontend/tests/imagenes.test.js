@@ -21,6 +21,9 @@ describe('imagenDeProducto', () => {
       'Helado de dulce de leche con brownie 1/4 kg',
       'Helado de frutos rojos 1/4 kg',
       'Helado de menta granizada 1/4 kg',
+      'Café Expreso',
+      'Tostado de Miga',
+      'Porción Chocotorta',
     ];
     const fotos = nombres.map((nombre) => imagenDeProducto(nombre));
     expect(fotos.every(Boolean)).toBe(true);
@@ -28,7 +31,7 @@ describe('imagenDeProducto', () => {
   });
 
   it('devuelve null si no hay una foto para el producto', () => {
-    expect(imagenDeProducto('Café Expreso')).toBeNull();
+    expect(imagenDeProducto('Licuado de banana')).toBeNull();
   });
 });
 
