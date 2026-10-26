@@ -1,11 +1,18 @@
 import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { cambiarEstadoPedido, eliminarPedido, listarPedidos, obtenerRecaudacion } from '../api/pedidos.js';
+import {
+  cambiarEstadoPedido,
+  eliminarPedido,
+  listarPedidos,
+  obtenerPedido,
+  obtenerRecaudacion,
+} from '../api/pedidos.js';
 import Aviso from '../components/Aviso.jsx';
 import DialogoConfirmacion from '../components/DialogoConfirmacion.jsx';
 import Encabezado from '../components/Encabezado.jsx';
-import { useAccionConAviso, useNotificar } from '../components/Notificaciones.jsx';
+import { useNotificar } from '../components/Notificaciones.jsx';
 import TarjetaPedido from '../components/TarjetaPedido.jsx';
+import useAccionConAviso from '../hooks/useAccionConAviso.js';
 import useCarga from '../hooks/useCarga.js';
 import useFormulario from '../hooks/useFormulario.js';
 import { ESTADO_PEDIDO, TIPO_ENTREGA } from '../utils/dominio.js';
@@ -22,6 +29,8 @@ export default function PedidosPage() {
   });
   const [aEliminar, setAEliminar] = useState(null);
   const [idOcupado, setIdOcupado] = useState(null);
+  const [numero, setNumero] = useState('');
+  const [buscado, setBuscado] = useState(null);
 
   const cargarPedidos = useCallback(async () => {
     const [pedidos, recaudacion] = await Promise.all([listarPedidos(filtros), obtenerRecaudacion(filtros)]);
@@ -29,14 +38,25 @@ export default function PedidosPage() {
   }, [filtros]);
   const { datos, error, recargar } = useCarga(cargarPedidos);
 
-  const pedidos = datos?.pedidos || [];
+  const pedidos = buscado ? [buscado] : datos?.pedidos || [];
 
-  async function cambiarEstado(pedido, estado) {
+  function buscar(evento) {
+    evento.preventDefault();
+    conAviso(async () => setBuscado(await obtenerPedido(numero)));
+  }
+
+  function verTodos() {
+    setBuscado(null);
+    setNumero('');
+    recargar();
+  }
+
+  async function marcarEntregado(pedido) {
     setIdOcupado(pedido.id);
     await conAviso(async () => {
-      await cambiarEstadoPedido(pedido.id, estado);
-      notificar(`Pedido #${pedido.id}: ${estado === ESTADO_PEDIDO.ENTREGADO ? 'entregado' : 'pendiente'}.`);
-      recargar();
+      await cambiarEstadoPedido(pedido.id, ESTADO_PEDIDO.ENTREGADO);
+      notificar(`Pedido #${pedido.id} entregado.`);
+      verTodos();
     });
     setIdOcupado(null);
   }
@@ -44,7 +64,7 @@ export default function PedidosPage() {
   async function eliminar() {
     await eliminarPedido(aEliminar.id);
     notificar(`Pedido #${aEliminar.id} eliminado.`);
-    recargar();
+    verTodos();
   }
 
   return (
@@ -57,7 +77,7 @@ export default function PedidosPage() {
 
       <section className="resumen">
         <div className="resumen-caja">
-          <span className="resumen-etiqueta">Vendido en el período</span>
+          <span className="resumen-etiqueta">Vendido en el período, pendientes incluidos</span>
           <span className="resumen-numero">{datos ? formatearPesos(datos.recaudacion) : '—'}</span>
         </div>
       </section>
@@ -71,6 +91,24 @@ export default function PedidosPage() {
           <option value={TIPO_ENTREGA.DELIVERY}>Solo delivery</option>
         </select>
       </div>
+      <form className="filtros" onSubmit={buscar}>
+        <input
+          type="number"
+          min="1"
+          aria-label="Número de pedido"
+          placeholder="N° de pedido"
+          value={numero}
+          onChange={(evento) => setNumero(evento.target.value)}
+        />
+        <button type="submit" className="btn btn-ghost" disabled={!numero}>
+          Buscar pedido
+        </button>
+        {buscado && (
+          <button type="button" className="btn btn-ghost" onClick={verTodos}>
+            Ver todos
+          </button>
+        )}
+      </form>
 
       <Aviso error={error} alReintentar={recargar} />
       {datos && pedidos.length === 0 && <p className="estado-vacio">No hay pedidos para mostrar.</p>}
@@ -80,7 +118,7 @@ export default function PedidosPage() {
             key={pedido.id}
             pedido={pedido}
             ocupado={idOcupado === pedido.id}
-            alCambiarEstado={cambiarEstado}
+            alMarcarEntregado={marcarEntregado}
             alEliminar={setAEliminar}
           />
         ))}

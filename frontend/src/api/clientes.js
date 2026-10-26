@@ -1,4 +1,4 @@
-import clienteHttp from './client.js';
+import clienteHttp from './http.js';
 
 export function obtenerMiPerfil() {
   return clienteHttp.get('/clientes/mi-perfil');

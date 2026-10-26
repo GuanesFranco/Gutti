@@ -4,7 +4,8 @@ import Aviso from '../components/Aviso.jsx';
 import Encabezado from '../components/Encabezado.jsx';
 import FormularioCliente from '../components/FormularioCliente.jsx';
 import Modal from '../components/Modal.jsx';
-import { useAccionConAviso, useNotificar } from '../components/Notificaciones.jsx';
+import { useNotificar } from '../components/Notificaciones.jsx';
+import useAccionConAviso from '../hooks/useAccionConAviso.js';
 import useCarga from '../hooks/useCarga.js';
 
 export default function ClientesPage() {
@@ -26,7 +27,9 @@ export default function ClientesPage() {
 
   return (
     <>
-      <Encabezado titulo="Clientes" />
+      <Encabezado titulo="Clientes">
+        {clientes && <span className="texto-suave">{clientes.length} registrados</span>}
+      </Encabezado>
       <Aviso error={error} alReintentar={recargar} />
       {clientes?.length === 0 && <p className="estado-vacio">Todavía no hay clientes registrados.</p>}
       {clientes?.length > 0 && (

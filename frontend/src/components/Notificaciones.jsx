@@ -1,5 +1,4 @@
 import { createContext, useCallback, useContext, useRef, useState } from 'react';
-import { obtenerMensajeDeError } from '../utils/errores.js';
 
 const DURACION_MS = 4000;
 const NotificacionesContext = createContext(() => {});
@@ -33,15 +32,4 @@ export function NotificacionesProvider({ children }) {
 
 export function useNotificar() {
   return useContext(NotificacionesContext);
-}
-
-export function useAccionConAviso() {
-  const notificar = useNotificar();
-  return async (accion) => {
-    try {
-      await accion();
-    } catch (excepcion) {
-      notificar(obtenerMensajeDeError(excepcion), true);
-    }
-  };
 }

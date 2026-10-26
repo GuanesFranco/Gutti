@@ -18,11 +18,11 @@ describe('formatearPesos', () => {
 
 describe('obtenerFechaDeHoy', () => {
   it('devuelve la fecha en formato yyyy-MM-dd', () => {
-    expect(obtenerFechaDeHoy(new Date(2026, 9, 21, 12, 0))).toBe('2026-10-21');
+    expect(obtenerFechaDeHoy(new Date(2026, 5, 10, 12, 0))).toBe('2026-06-10');
   });
 
   it('usa la fecha local aunque en UTC ya sea el día siguiente', () => {
-    expect(obtenerFechaDeHoy(new Date(2026, 9, 20, 23, 30))).toBe('2026-10-20');
+    expect(obtenerFechaDeHoy(new Date(2026, 5, 9, 23, 30))).toBe('2026-06-09');
   });
 });
 

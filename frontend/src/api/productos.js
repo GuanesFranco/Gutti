@@ -1,5 +1,5 @@
 import { quitarVacios } from '../utils/filtros.js';
-import clienteHttp from './client.js';
+import clienteHttp from './http.js';
 
 export function listarProductos(filtros = {}) {
   return clienteHttp.get('/productos/consultarproductos', { params: quitarVacios(filtros) });

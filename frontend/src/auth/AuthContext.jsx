@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { iniciarSesion } from '../api/auth.js';
-import { registrarAlVencerSesion } from '../api/client.js';
+import { registrarAlVencerSesion } from '../api/http.js';
 import { MENSAJE_SESION_VENCIDA } from '../utils/errores.js';
 import {
   borrarSesion,

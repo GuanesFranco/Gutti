@@ -15,6 +15,10 @@ describe('obtenerMensajeDeError', () => {
     expect(obtenerMensajeDeError({ request: {} })).toMatch(/servidor/);
   });
 
+  it('avisa que el servidor no responde cuando el proxy devuelve 502', () => {
+    expect(obtenerMensajeDeError({ request: {}, response: { status: 502, data: '' } })).toMatch(/servidor/);
+  });
+
   it('usa el mensaje propio de un error que no vino del servidor', () => {
     expect(obtenerMensajeDeError(new Error('Tu sesión venció.'))).toBe('Tu sesión venció.');
   });

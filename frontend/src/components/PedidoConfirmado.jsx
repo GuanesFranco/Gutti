@@ -7,7 +7,7 @@ export default function PedidoConfirmado({ pedido, alHacerOtro }) {
         cabecera={<strong className="ticket-numero">Pedido #{pedido.id}</strong>}
         pie={<TotalTicket monto={pedido.total} />}
       >
-        <p>Recibimos tu pedido. Te avisamos cuando esté listo.</p>
+        <p>Recibimos tu pedido. Guardá el número por si tenés que consultarlo.</p>
       </Ticket>
       <button type="button" className="btn btn-primario" onClick={alHacerOtro}>
         Hacer otro pedido

@@ -1,3 +1,6 @@
+const VALORES_VACIOS = [undefined, null, ''];
+
 export function quitarVacios(parametros) {
-  return Object.fromEntries(Object.entries(parametros).filter(([, valor]) => ![undefined, null, ''].includes(valor)));
+  const conValor = Object.entries(parametros).filter(([, valor]) => !VALORES_VACIOS.includes(valor));
+  return Object.fromEntries(conValor);
 }

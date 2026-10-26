@@ -1,4 +1,4 @@
-import clienteHttp from './client.js';
+import clienteHttp from './http.js';
 
 export function iniciarSesion(email, password) {
   return clienteHttp.post('/auth/iniciar-sesion', { email, password });

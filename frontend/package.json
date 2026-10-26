@@ -6,7 +6,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write src tests",
+    "format": "prettier --write .",
     "test": "vitest run"
   },
   "dependencies": {
@@ -29,7 +29,7 @@
   },
   "private": true,
   "type": "module",
-  "description": "Panel web de Gutti (React + Vite)",
+  "description": "Frontend de Gutti: catálogo, pedidos y panel de administración (React + Vite)",
   "engines": {
     "node": ">=20.19"
   }

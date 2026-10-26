@@ -4,7 +4,7 @@ import { formatearFechaHora, formatearPesos } from '../utils/formato.js';
 import { rutaEditarPedido } from '../utils/rutas.js';
 import Ticket, { TotalTicket } from './Ticket.jsx';
 
-export default function TarjetaPedido({ pedido, ocupado, alCambiarEstado, alEliminar }) {
+export default function TarjetaPedido({ pedido, ocupado, alMarcarEntregado, alEliminar }) {
   const entregado = pedido.estado === ESTADO_PEDIDO.ENTREGADO;
   const esDelivery = pedido.tipoDeEntrega === TIPO_ENTREGA.DELIVERY;
 
@@ -32,25 +32,13 @@ export default function TarjetaPedido({ pedido, ocupado, alCambiarEstado, alElim
   const pie = (
     <>
       <TotalTicket monto={pedido.total} />
-      {entregado && (
-        <div className="ticket-acciones">
-          <button
-            type="button"
-            className="btn btn-ghost btn-chico"
-            disabled={ocupado}
-            onClick={() => alCambiarEstado(pedido, ESTADO_PEDIDO.PENDIENTE)}
-          >
-            Volver a pendiente
-          </button>
-        </div>
-      )}
       {!entregado && (
         <div className="ticket-acciones">
           <button
             type="button"
             className="btn btn-primario btn-chico"
             disabled={ocupado}
-            onClick={() => alCambiarEstado(pedido, ESTADO_PEDIDO.ENTREGADO)}
+            onClick={() => alMarcarEntregado(pedido)}
           >
             Marcar entregado
           </button>
@@ -73,8 +61,8 @@ export default function TarjetaPedido({ pedido, ocupado, alCambiarEstado, alElim
   return (
     <Ticket entregado={entregado} cabecera={cabecera} pie={pie}>
       <ul className="lineas">
-        {pedido.items.map((item, indice) => (
-          <li key={indice}>
+        {pedido.items.map((item) => (
+          <li key={item.nombreProducto}>
             <span className="lineas-cantidad">{item.cantidad}×</span>
             <span>{item.nombreProducto}</span>
             <span className="lineas-monto">{formatearPesos(item.subtotal)}</span>

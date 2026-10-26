@@ -1,6 +1,6 @@
 import { CATEGORIAS } from '../utils/dominio.js';
 
-export default function SelectCategoria({ valor, alCambiar, textoTodas }) {
+export default function SelectorCategoria({ valor, alCambiar, textoTodas }) {
   return (
     <select aria-label="Categoría" value={valor} onChange={alCambiar}>
       {textoTodas && <option value="">{textoTodas}</option>}

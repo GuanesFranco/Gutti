@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { obtenerMensajeDeError } from '../utils/errores.js';
 
-// Guarda si un envío está en curso y el mensaje de error que respondió el backend.
 export default function useEnvio(errorInicial = '') {
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState(errorInicial);

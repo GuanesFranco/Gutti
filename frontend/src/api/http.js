@@ -12,7 +12,7 @@ export function registrarAlVencerSesion(funcion) {
   alVencerSesion = funcion;
 }
 
-// Antes de cada llamada se agrega el token; si ya venció, se cierra la sesión.
+// Si el token ya venció, la llamada no sale y se cierra la sesión.
 clienteHttp.interceptors.request.use((configuracion) => {
   const token = obtenerToken();
   if (token && estaVencido(token)) {

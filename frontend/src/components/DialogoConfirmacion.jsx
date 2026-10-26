@@ -15,7 +15,7 @@ export default function DialogoConfirmacion({ titulo, texto, textoAccion, alConf
     <Modal titulo={titulo} alCerrar={alCerrar}>
       <p className="texto-suave">{texto}</p>
       <Aviso error={error} />
-      <div className="modal-acciones">
+      <div className="botonera">
         <button type="button" className="btn btn-ghost" onClick={alCerrar}>
           Cancelar
         </button>

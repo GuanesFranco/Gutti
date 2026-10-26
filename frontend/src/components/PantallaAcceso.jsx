@@ -5,7 +5,7 @@ export default function PantallaAcceso({ titulo, children }) {
     <div className="acceso">
       <section className="acceso-marca" aria-hidden="true">
         <img className="acceso-logotipo" src={logo} alt="" />
-        <p>Pedidos, stock y caja del día en un solo lugar.</p>
+        <p>Churros, medialunas y helados. Pedí por acá y elegí si lo retirás o te lo llevamos.</p>
       </section>
       <section className="acceso-formulario">
         <div className="acceso-caja">

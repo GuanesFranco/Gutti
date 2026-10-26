@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { obtenerMensajeDeError } from '../utils/errores.js';
 
-// Trae datos del backend y los vuelve a pedir cuando cambian los filtros.
 export default function useCarga(cargar) {
   const [resultado, setResultado] = useState({ datos: null, error: '' });
   const [version, setVersion] = useState(0);

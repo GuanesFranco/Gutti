@@ -23,7 +23,7 @@ export function formatearFechaHora(fecha) {
   });
 }
 
-// Fecha local en formato yyyy-MM-dd (toISOString la daría en hora UTC).
+// Fecha de acá, no la de UTC que daría toISOString.
 export function obtenerFechaDeHoy(ahora = new Date()) {
   const desfase = ahora.getTimezoneOffset() * MILISEGUNDOS_POR_MINUTO;
   const fechaLocal = new Date(ahora.getTime() - desfase);

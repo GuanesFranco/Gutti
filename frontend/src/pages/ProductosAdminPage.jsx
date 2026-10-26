@@ -11,8 +11,9 @@ import Aviso from '../components/Aviso.jsx';
 import DialogoConfirmacion from '../components/DialogoConfirmacion.jsx';
 import Encabezado from '../components/Encabezado.jsx';
 import FormularioProducto from '../components/FormularioProducto.jsx';
-import { useAccionConAviso, useNotificar } from '../components/Notificaciones.jsx';
-import SelectCategoria from '../components/SelectCategoria.jsx';
+import { useNotificar } from '../components/Notificaciones.jsx';
+import SelectorCategoria from '../components/SelectorCategoria.jsx';
+import useAccionConAviso from '../hooks/useAccionConAviso.js';
 import useCarga from '../hooks/useCarga.js';
 import useFormulario from '../hooks/useFormulario.js';
 import { nombrarCategoria, ORDEN_STOCK } from '../utils/dominio.js';
@@ -89,7 +90,7 @@ export default function ProductosAdminPage() {
           value={filtros.nombre}
           onChange={cambiarFiltro('nombre')}
         />
-        <SelectCategoria
+        <SelectorCategoria
           valor={filtros.categoria}
           alCambiar={cambiarFiltro('categoria')}
           textoTodas="Todas las categorías"

@@ -33,7 +33,7 @@ export default function FormularioCliente({ cliente, alGuardar, children }) {
         </Campo>
       </div>
       <Aviso error={error} />
-      <div className="modal-acciones">
+      <div className="botonera">
         {children}
         <button type="submit" className="btn btn-primario" disabled={enviando}>
           {enviando ? 'Guardando…' : 'Guardar cambios'}

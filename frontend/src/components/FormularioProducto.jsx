@@ -4,11 +4,14 @@ import { CATEGORIAS } from '../utils/dominio.js';
 import Aviso from './Aviso.jsx';
 import Campo from './Campo.jsx';
 import Modal from './Modal.jsx';
-import SelectCategoria from './SelectCategoria.jsx';
+import SelectorCategoria from './SelectorCategoria.jsx';
 
-// Un campo vacío se manda como null para que el backend responda con su propio mensaje.
+// Los campos vacíos van como null: el mensaje lo escribe el backend.
 function aNumero(texto) {
-  return texto === '' ? null : Number(texto);
+  if (texto === '') {
+    return null;
+  }
+  return Number(texto);
 }
 
 export default function FormularioProducto({ producto, alGuardar, alCerrar }) {
@@ -41,7 +44,7 @@ export default function FormularioProducto({ producto, alGuardar, alCerrar }) {
           <input value={valores.nombre} onChange={cambiar('nombre')} />
         </Campo>
         <Campo etiqueta="Categoría">
-          <SelectCategoria valor={valores.categoria} alCambiar={cambiar('categoria')} />
+          <SelectorCategoria valor={valores.categoria} alCambiar={cambiar('categoria')} />
         </Campo>
         <div className="formulario-fila">
           <Campo etiqueta="Precio ($)">
@@ -55,7 +58,7 @@ export default function FormularioProducto({ producto, alGuardar, alCerrar }) {
           <input value={valores.descripcion} onChange={cambiar('descripcion')} />
         </Campo>
         <Aviso error={error} />
-        <div className="modal-acciones">
+        <div className="botonera">
           <button type="button" className="btn btn-ghost" onClick={alCerrar}>
             Cancelar
           </button>

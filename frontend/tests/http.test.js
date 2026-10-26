@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
-import clienteHttp from '../src/api/client.js';
+import clienteHttp from '../src/api/http.js';
 import { guardarToken, obtenerToken } from '../src/api/token.js';
 import { MENSAJE_SESION_VENCIDA } from '../src/utils/errores.js';
 import { crearToken, segundosDesdeAhora } from './ayudantes.js';
@@ -18,7 +18,7 @@ function devolverAutorizacion(configuracion) {
 
 describe('interceptor del cliente HTTP', () => {
   beforeEach(() => {
-    localStorage.clear();
+    sessionStorage.clear();
   });
 
   it('agrega el token a cada llamada', async () => {

@@ -139,6 +139,8 @@ select, .filtros input[type='date'] { width: auto; }
   padding: 0.85rem 0.9rem; text-align: left; font: inherit; color: inherit; background: var(--superficie);
   border: 1px solid var(--borde); border-radius: var(--radio); }
 .producto-boton { cursor: pointer; }
+a.tarjeta-catalogo { color: inherit; text-decoration: none; }
+a.tarjeta-catalogo:hover { border-color: var(--verde); }
 .producto-boton:not(:disabled):hover, .producto-elegido .producto-boton { border-color: var(--verde); }
 .producto-boton:disabled { cursor: not-allowed; opacity: 0.6; }
 .producto-foto { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 6px; margin-bottom: 0.35rem; }
@@ -168,15 +170,15 @@ select, .filtros input[type='date'] { width: auto; }
 .modal::backdrop { background: rgba(10, 30, 26, 0.45); }
 .modal-contenido { padding: 1.5rem; }
 .modal-cabecera { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-.modal-acciones { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem; }
+.botonera { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem; }
 .notificaciones { position: fixed; right: 1.25rem; bottom: 1.25rem; display: flex; flex-direction: column;
   gap: 0.5rem; }
 .notificacion { padding: 0.75rem 1rem; border-radius: 6px; background: var(--barra); color: #fff; font-weight: 700; }
 .notificacion-error { background: var(--peligro); }
 
 .acceso { display: grid; grid-template-columns: 1.1fr 1fr; min-height: 100vh; }
-.acceso-marca { display: flex; flex-direction: column; justify-content: flex-end; padding: clamp(2rem, 5vw, 4rem);
-  background: var(--barra); color: var(--barra-texto); overflow: hidden; }
+.acceso-marca { display: flex; flex-direction: column; justify-content: center; gap: 1.5rem;
+  padding: clamp(2rem, 5vw, 4rem); background: var(--barra); color: var(--barra-texto); overflow: hidden; }
 .acceso-logotipo { width: clamp(9rem, 28vw, 18rem); border-radius: 50%; }
 .acceso-marca p { font-size: 1.2rem; }
 .acceso-formulario { display: grid; place-items: center; padding: 2rem 1.25rem; }
