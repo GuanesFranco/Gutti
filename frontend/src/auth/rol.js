@@ -1,9 +1,18 @@
 import { obtenerRecaudacion } from '../api/pedidos.js';
+import { obtenerRolDeToken } from '../api/token.js';
 import { ROL } from '../utils/dominio.js';
 import { esErrorDePermiso } from '../utils/errores.js';
 
-// El token no trae el rol: si puede ver la recaudación, es admin.
-export async function detectarRol() {
+// Si el token trae el claim 'rol', lo usamos directo sin llamadas de red.
+// Si no, recurre al chequeo de permisos sobre recaudación.
+export async function detectarRol(token) {
+  if (token) {
+    const rolEnToken = obtenerRolDeToken(token);
+    if (rolEnToken) {
+      return rolEnToken.toUpperCase() === 'ADMIN' ? ROL.ADMIN : ROL.CLIENTE;
+    }
+  }
+
   try {
     await obtenerRecaudacion();
     return ROL.ADMIN;

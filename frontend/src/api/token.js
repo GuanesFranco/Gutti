@@ -39,6 +39,10 @@ export function obtenerEmail(token) {
   return leerToken(token)?.sub ?? null;
 }
 
+export function obtenerRolDeToken(token) {
+  return leerToken(token)?.rol ?? null;
+}
+
 export function estaVencido(token) {
   const contenido = leerToken(token);
   if (!contenido) {

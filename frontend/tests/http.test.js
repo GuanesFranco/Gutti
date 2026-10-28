@@ -36,4 +36,13 @@ describe('interceptor del cliente HTTP', () => {
   it('sin sesión llama al backend sin token', async () => {
     await expect(clienteHttp.get('/x', { adapter: devolverAutorizacion })).resolves.toBeNull();
   });
+
+  it('si el backend responde 401 borra la sesión', async () => {
+    const token = crearToken({ exp: segundosDesdeAhora(SEGUNDOS_POR_HORA) });
+    guardarToken(token);
+    const error401 = { response: { status: 401 } };
+    const rechazar401 = () => Promise.reject(error401);
+    await expect(clienteHttp.get('/x', { adapter: rechazar401 })).rejects.toEqual(error401);
+    expect(obtenerToken()).toBeNull();
+  });
 });

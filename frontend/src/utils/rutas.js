@@ -9,6 +9,7 @@ export const RUTAS = {
   PRODUCTOS: '/productos',
   CLIENTES: '/clientes',
   PERFIL: '/perfil',
+  MIS_PEDIDOS: '/mis-pedidos',
 };
 
 export function rutaEditarPedido(id) {
