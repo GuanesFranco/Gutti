@@ -27,8 +27,11 @@ export default function ClientesPage() {
 
   return (
     <>
-      <Encabezado titulo="Clientes">
-        {clientes && <span className="texto-suave">{clientes.length} registrados</span>}
+      <Encabezado
+        titulo="Clientes"
+        subtitulo="Directorio de clientes registrados y datos de contacto"
+      >
+        {clientes && <span className="chip chip-ok">{clientes.length} registrados</span>}
       </Encabezado>
       <Aviso error={error} alReintentar={recargar} />
       {clientes?.length === 0 && <p className="estado-vacio">Todavía no hay clientes registrados.</p>}
@@ -50,7 +53,32 @@ export default function ClientesPage() {
                     <strong>{cliente.nombre}</strong>
                     <small className="subtexto">{cliente.email}</small>
                   </td>
-                  <td>{cliente.telefono}</td>
+                  <td>
+                    {cliente.telefono ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span>{cliente.telefono}</span>
+                        <a
+                          href={`https://wa.me/549${cliente.telefono.replace(/\D/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-ghost btn-chico"
+                          style={{
+                            padding: '2px 8px',
+                            fontSize: '0.78rem',
+                            color: 'var(--caramelo)',
+                            borderColor: 'var(--borde)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                          }}
+                          title="Contactar al cliente por WhatsApp"
+                        >
+                          WhatsApp
+                        </a>
+                      </div>
+                    ) : (
+                      <span className="texto-suave">—</span>
+                    )}
+                  </td>
                   <td>{cliente.direccion}</td>
                   <td className="acciones">
                     <button type="button" className="btn btn-ghost btn-chico" onClick={() => abrir(cliente.id)}>

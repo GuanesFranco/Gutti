@@ -11,6 +11,7 @@ import Aviso from '../components/Aviso.jsx';
 import DialogoConfirmacion from '../components/DialogoConfirmacion.jsx';
 import Encabezado from '../components/Encabezado.jsx';
 import FormularioProducto from '../components/FormularioProducto.jsx';
+import FotoProducto from '../components/FotoProducto.jsx';
 import { useNotificar } from '../components/Notificaciones.jsx';
 import SelectorCategoria from '../components/SelectorCategoria.jsx';
 import useAccionConAviso from '../hooks/useAccionConAviso.js';
@@ -75,7 +76,10 @@ export default function ProductosAdminPage() {
 
   return (
     <>
-      <Encabezado titulo="Productos">
+      <Encabezado
+        titulo="Productos"
+        subtitulo="Gestión del catálogo, precios y disponibilidad de stock"
+      >
         <button type="button" className="btn btn-primario" onClick={() => setEnEdicion({})}>
           Nuevo producto
         </button>
@@ -126,12 +130,46 @@ export default function ProductosAdminPage() {
               {productos.map((producto) => (
                 <tr key={producto.id} className={producto.estadoActivo ? '' : 'fila-apagada'}>
                   <td>
-                    <strong>{producto.nombre}</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <div
+                        style={{
+                          width: '44px',
+                          height: '44px',
+                          minWidth: '44px',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          background: 'var(--superficie-2)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <FotoProducto nombre={producto.nombre} imagenUrl={producto.imagenUrl} />
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <strong style={{ display: 'block' }}>{producto.nombre}</strong>
                     {producto.descripcion && <small className="subtexto">{producto.descripcion}</small>}
+                      </div>
+                    </div>
                   </td>
                   <td>{nombrarCategoria(producto.categoria)}</td>
                   <td className="numero">{formatearPesos(producto.precio)}</td>
-                  <td className="numero">{producto.stock}</td>
+                  <td className="numero">
+                    {producto.stock <= 0 ? (
+                      <span className="chip chip-apagado" style={{ color: 'var(--peligro)', fontWeight: 700 }}>
+                        Agotado
+                      </span>
+                    ) : producto.stock <= 5 ? (
+                      <span style={{ color: '#D97706', fontWeight: 700 }} title="Stock crítico">
+                        {producto.stock}{' '}
+                        <small style={{ fontSize: '0.72rem', display: 'block', fontWeight: 600 }}>
+                          ¡Últimas {producto.stock}!
+                        </small>
+                      </span>
+                    ) : (
+                      <span>{producto.stock}</span>
+                    )}
+                  </td>
                   <td>
                     <span className={`chip ${producto.estadoActivo ? 'chip-ok' : 'chip-apagado'}`}>
                       {producto.estadoActivo ? 'Activo' : 'Desactivado'}
