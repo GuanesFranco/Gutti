@@ -134,7 +134,7 @@ class AutenticacionServiceTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(null);
         when(usuarioRepository.findByEmail("franco@gutti.com")).thenReturn(Optional.of(usuario));
-        when(jwtService.generarToken(any(UserDetails.class))).thenReturn("token.jwt.generado");
+        when(jwtService.generarToken(anyMap(), any(UserDetails.class))).thenReturn("token.jwt.generado");
 
         // Act
         AutenticacionRespuestaDTO respuesta = autenticacionService.iniciarSesion(dto);
@@ -142,8 +142,10 @@ class AutenticacionServiceTest {
         // Assert
         assertThat(respuesta).isNotNull();
         assertThat(respuesta.getToken()).isEqualTo("token.jwt.generado");
+        assertThat(respuesta.getRol()).isEqualTo("CLIENTE");
+        assertThat(respuesta.getEmail()).isEqualTo("franco@gutti.com");
         verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(jwtService, times(1)).generarToken(any(UserDetails.class));
+        verify(jwtService, times(1)).generarToken(anyMap(), any(UserDetails.class));
     }
 
     @Test

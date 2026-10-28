@@ -29,9 +29,11 @@ describe('obtenerFechaDeHoy', () => {
 describe('nombrarCategoria', () => {
   it('traduce la categoría del backend a su nombre para mostrar', () => {
     expect(nombrarCategoria('SANGUCHES')).toBe('Sánguches');
+    expect(nombrarCategoria('BEBIDAS')).toBe('Bebidas');
+    expect(nombrarCategoria('PANADERIA')).toBe('Panadería');
   });
 
   it('muestra tal cual una categoría que no conoce', () => {
-    expect(nombrarCategoria('BEBIDAS')).toBe('BEBIDAS');
+    expect(nombrarCategoria('OTRA')).toBe('OTRA');
   });
 });

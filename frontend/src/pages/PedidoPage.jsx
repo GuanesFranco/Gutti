@@ -24,6 +24,15 @@ function elegirTitulo(id, esAdmin) {
   return esAdmin ? 'Nuevo pedido' : 'Hacer un pedido';
 }
 
+function elegirSubtitulo(id, esAdmin) {
+  if (id) {
+    return 'Modificá las cantidades o el tipo de entrega del pedido';
+  }
+  return esAdmin
+    ? 'Carga de pedido en mostrador o comanda de delivery'
+    : 'Elegí tus delicias favoritas y te las preparamos al instante';
+}
+
 function elegirTextoConfirmar(id, estaAutenticado) {
   if (id) {
     return 'Guardar cambios';
@@ -84,7 +93,10 @@ export default function PedidoPage() {
 
   return (
     <>
-      <Encabezado titulo={elegirTitulo(id, esAdmin)} />
+      <Encabezado
+        titulo={elegirTitulo(id, esAdmin)}
+        subtitulo={elegirSubtitulo(id, esAdmin)}
+      />
       <Aviso error={error} alReintentar={recargar} />
       {!catalogo.productos && <Aviso error={catalogo.error} alReintentar={catalogo.recargar} />}
       {listo && (

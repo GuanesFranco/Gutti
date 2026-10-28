@@ -17,6 +17,7 @@ public class PedidoResponse {
     private TipoDeEntrega tipoDeEntrega;
     private String nombreCliente;
     private String telefono;
+    private String direccion;
     private List<Item> items = new ArrayList<>();
     private Double total;
 
@@ -25,5 +26,6 @@ public class PedidoResponse {
         private String nombreProducto;
         private Integer cantidad;
         private Double subtotal;
+        private String gustos;
     }
 }

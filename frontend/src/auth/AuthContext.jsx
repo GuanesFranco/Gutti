@@ -40,10 +40,11 @@ export function AuthProvider({ children }) {
   }, [cerrarSesion]);
 
   async function ingresar(email, password) {
-    const { token } = await iniciarSesion(email, password);
+    const respuesta = await iniciarSesion(email, password);
+    const token = respuesta.token;
     guardarToken(token);
     try {
-      const rol = await detectarRol();
+      const rol = respuesta.rol || (await detectarRol(token));
       guardarRol(rol);
       setSesion({ token, rol });
       setAviso('');
@@ -53,6 +54,11 @@ export function AuthProvider({ children }) {
     }
   }
 
+  const actualizarTokenSesion = useCallback((nuevoToken) => {
+    guardarToken(nuevoToken);
+    setSesion((anterior) => (anterior ? { ...anterior, token: nuevoToken } : anterior));
+  }, []);
+
   const valor = {
     estaAutenticado: Boolean(sesion),
     rol: sesion?.rol,
@@ -60,6 +66,7 @@ export function AuthProvider({ children }) {
     aviso,
     ingresar,
     cerrarSesion,
+    actualizarTokenSesion,
   };
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;

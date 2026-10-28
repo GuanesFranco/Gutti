@@ -12,19 +12,13 @@ import org.springframework.data.domain.Sort;
 import java.util.List;
 
 @Repository
-
-public interface ProductoRepository extends JpaRepository<Producto, Long>, JpaSpecificationExecutor<Producto>{
-
-    List<Producto> findByCategoria(String categoria);
+public interface ProductoRepository extends JpaRepository<Producto, Long>, JpaSpecificationExecutor<Producto> {
 
     boolean existsByNombre(String nombre);
 
-    Producto findByNombre(String nombre);
+    default List<Producto> filterQuery(FilterProductoRequest request) {
 
-    
-    default List<Producto> filterQuery(FilterProductoRequest request){
-
-    Specification<Producto> spec = Specification.unrestricted();
+        Specification<Producto> spec = Specification.unrestricted();
 
         if (request.getNombre() != null && !request.getNombre().isBlank()) {
             spec = spec.and((root, query, cb) -> 
@@ -38,25 +32,23 @@ public interface ProductoRepository extends JpaRepository<Producto, Long>, JpaSp
             );
         }
         
-        if(request.getEstadoActivo() != null){
+        if (request.getEstadoActivo() != null) {
             spec = spec.and((root, query, cb) -> 
-            cb.equal(root.get("estadoActivo"), request.getEstadoActivo()));
-                
-         }
+                cb.equal(root.get("estadoActivo"), request.getEstadoActivo())
+            );
+        }
 
-
-    Sort sort = Sort.unsorted();
+        Sort sort = Sort.unsorted();
 
         if (request.getOrdenStock() != null && !request.getOrdenStock().isBlank()) {
-        if ("ASC".equalsIgnoreCase(request.getOrdenStock().trim())) {
-            sort = Sort.by(Sort.Direction.ASC, "stock");
-        } else if ("DESC".equalsIgnoreCase(request.getOrdenStock().trim())) {
-            sort = Sort.by(Sort.Direction.DESC, "stock");
+            if ("ASC".equalsIgnoreCase(request.getOrdenStock().trim())) {
+                sort = Sort.by(Sort.Direction.ASC, "stock");
+            } else if ("DESC".equalsIgnoreCase(request.getOrdenStock().trim())) {
+                sort = Sort.by(Sort.Direction.DESC, "stock");
+            }
         }
-    }
     
-        return findAll(spec,sort);
+        return findAll(spec, sort);
     }
 
 }
-

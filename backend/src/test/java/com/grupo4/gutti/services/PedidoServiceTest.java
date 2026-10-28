@@ -251,6 +251,25 @@ class PedidoServiceTest {
         assertThat(soloMostrador.get(0).getTipoDeEntrega()).isEqualTo(TipoDeEntrega.MOSTRADOR);
     }
 
+    @Test
+    @DisplayName("consultarPaginado() - Debe paginar pedidos correctamente según page y size")
+    void consultarPaginado_conPageYSize_retornaPaginaCorrecta() {
+        // Arrange
+        Producto cafe = producto(1L, "Café", 2500.0, 50, true);
+        Pedido p1 = pedidoConItem(Pedido.ESTADO_PENDIENTE, TipoDeEntrega.MOSTRADOR, cafe, 1);
+        Pedido p2 = pedidoConItem(Pedido.ESTADO_PENDIENTE, TipoDeEntrega.MOSTRADOR, cafe, 2);
+        when(pedidoRepository.findAllByOrderByFechaHoraDesc()).thenReturn(List.of(p1, p2));
+
+        // Act
+        com.grupo4.gutti.dtos.PaginaDTO<PedidoResponse> pagina = pedidoService.consultarPaginado(
+                null, null, null, 0, 1);
+
+        // Assert
+        assertThat(pagina.getTotalElements()).isEqualTo(2);
+        assertThat(pagina.getTotalPages()).isEqualTo(2);
+        assertThat(pagina.getContent()).hasSize(1);
+    }
+
     // ==========================================
     // CALCULAR RECAUDACIÓN
     // ==========================================
@@ -357,5 +376,21 @@ class PedidoServiceTest {
         // Assert
         assertThat(resp.getEstado()).isEqualTo(Pedido.ESTADO_ENTREGADO);
         verify(pedidoRepository).save(pendiente);
+    }
+
+    @Test
+    @DisplayName("consultarMisPedidos() - Debe retornar solo los pedidos del email indicado")
+    void consultarMisPedidos_conEmailValido_retornaPedidosDelUsuario() {
+        // Arrange
+        Producto cafe = producto(1L, "Café", 2500.0, 50, true);
+        Pedido pedido = pedidoConItem(Pedido.ESTADO_PENDIENTE, TipoDeEntrega.MOSTRADOR, cafe, 1);
+        when(pedidoRepository.findByUsuarioEmailOrderByFechaHoraDesc(EMAIL)).thenReturn(List.of(pedido));
+
+        // Act
+        List<PedidoResponse> resultado = pedidoService.consultarMisPedidos(EMAIL);
+
+        // Assert
+        assertThat(resultado).hasSize(1);
+        verify(pedidoRepository).findByUsuarioEmailOrderByFechaHoraDesc(EMAIL);
     }
 }

@@ -68,12 +68,22 @@ describe('carritoDePedido', () => {
 
 describe('armarEntrega', () => {
   it('sin datos arranca en mostrador y con los campos vacíos', () => {
-    expect(armarEntrega(undefined)).toEqual({ tipoDeEntrega: 'MOSTRADOR', nombreCliente: '', telefono: '' });
+    expect(armarEntrega(undefined)).toEqual({
+      tipoDeEntrega: 'MOSTRADOR',
+      nombreCliente: '',
+      telefono: '',
+      direccion: '',
+    });
   });
 
   it('toma los datos de un pedido, cambiando null por texto vacío', () => {
     const pedido = { tipoDeEntrega: 'DELIVERY', nombreCliente: null, telefono: '1122' };
-    expect(armarEntrega(pedido)).toEqual({ tipoDeEntrega: 'DELIVERY', nombreCliente: '', telefono: '1122' });
+    expect(armarEntrega(pedido)).toEqual({
+      tipoDeEntrega: 'DELIVERY',
+      nombreCliente: '',
+      telefono: '1122',
+      direccion: '',
+    });
   });
 });
 
@@ -89,11 +99,20 @@ describe('prepararFormulario', () => {
   });
 
   it('en un pedido nuevo, toma el nombre y el teléfono del perfil', () => {
-    const perfil = { nombre: 'Ana', telefono: '1122' };
+    const perfil = { nombre: 'Ana', telefono: '1122', direccion: 'Calle 123' };
     expect(prepararFormulario({ perfil, productos: [CAFE] }).entrega).toEqual({
       tipoDeEntrega: 'MOSTRADOR',
       nombreCliente: 'Ana',
       telefono: '1122',
+      direccion: 'Calle 123',
     });
+  });
+
+  it('con un borrador que solo tiene carrito, inicializa la entrega por defecto de forma segura', () => {
+    const borrador = { carrito: { 1: { producto: CAFE, cantidad: 2 } } };
+    const resultado = prepararFormulario({ borrador, productos: [CAFE] });
+    expect(resultado.carrito).toEqual(borrador.carrito);
+    expect(resultado.entrega.tipoDeEntrega).toBe('MOSTRADOR');
+    expect(resultado.entrega.nombreCliente).toBe('');
   });
 });

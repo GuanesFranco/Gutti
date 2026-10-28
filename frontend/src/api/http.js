@@ -2,9 +2,13 @@ import axios from 'axios';
 import { MENSAJE_SESION_VENCIDA } from '../utils/errores.js';
 import { borrarSesion, estaVencido, obtenerToken } from './token.js';
 
-const URL_BASE = '/api/v1';
+const URL_BASE = import.meta.env.VITE_API_URL || '/api/v1';
+const TIMEOUT_MILISEGUNDOS = 10000;
 
-const clienteHttp = axios.create({ baseURL: URL_BASE });
+const clienteHttp = axios.create({
+  baseURL: URL_BASE,
+  timeout: TIMEOUT_MILISEGUNDOS,
+});
 
 let alVencerSesion = () => {};
 
@@ -26,6 +30,18 @@ clienteHttp.interceptors.request.use((configuracion) => {
   return configuracion;
 });
 
-clienteHttp.interceptors.response.use((respuesta) => respuesta.data);
+const HTTP_NO_AUTORIZADO = 401;
+
+// Desempaqueta la respuesta y captura 401 Unauthorized para limpiar sesión de forma segura
+clienteHttp.interceptors.response.use(
+  (respuesta) => respuesta.data,
+  (error) => {
+    if (error.response?.status === HTTP_NO_AUTORIZADO) {
+      borrarSesion();
+      alVencerSesion();
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default clienteHttp;

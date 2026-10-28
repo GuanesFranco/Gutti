@@ -5,6 +5,10 @@ export function listarPedidos(filtros = {}) {
   return clienteHttp.get('/pedidos', { params: quitarVacios(filtros) });
 }
 
+export function listarMisPedidos() {
+  return clienteHttp.get('/pedidos/mis-pedidos');
+}
+
 export function obtenerRecaudacion(filtros = {}) {
   return clienteHttp.get('/pedidos/recaudacion', { params: quitarVacios(filtros) });
 }

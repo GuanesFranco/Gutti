@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
+import static org.springframework.http.HttpStatus.*;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -24,8 +24,8 @@ public class AutenticacionController {
 
     private final AutenticacionService autenticacionService;
 
-   @PostMapping("/registro")
-    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping("/registro")
+    @ResponseStatus(CREATED)
     @Operation(summary = "Registrar un nuevo cliente")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Cliente registrado exitosamente"),
@@ -46,8 +46,8 @@ public class AutenticacionController {
         log.info("response registro de cliente completado exitosamente para {}", dto.getEmail());
     }
 
-   @PostMapping("/iniciar-sesion")
-    @ResponseStatus(HttpStatus.OK)
+    @PostMapping("/iniciar-sesion")
+    @ResponseStatus(OK)
     @Operation(summary = "Iniciar sesión para obtener un token de acceso")
     @ApiResponses(value = {
         @ApiResponse(

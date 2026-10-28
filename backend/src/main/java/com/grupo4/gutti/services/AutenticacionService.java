@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,9 +62,11 @@ public class AutenticacionService {
 
         Usuario usuario = usuarioRepository.findByEmail(dto.getEmail()).orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
 
-        String jwtToken = jwtService.generarToken(new DetallesUsuario(usuario));
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("rol", usuario.getRol());
+        String jwtToken = jwtService.generarToken(extraClaims, new DetallesUsuario(usuario));
         
         log.info("Sesión iniciada correctamente, token generado para: {}", dto.getEmail());
-        return new AutenticacionRespuestaDTO(jwtToken);
+        return new AutenticacionRespuestaDTO(jwtToken, usuario.getRol(), usuario.getEmail());
     }
 }

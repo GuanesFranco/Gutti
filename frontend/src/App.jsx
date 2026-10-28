@@ -6,6 +6,7 @@ import Layout from './components/Layout.jsx';
 import CatalogoPage from './pages/CatalogoPage.jsx';
 import ClientesPage from './pages/ClientesPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
+import MisPedidosPage from './pages/MisPedidosPage.jsx';
 import PedidoPage from './pages/PedidoPage.jsx';
 import PedidosPage from './pages/PedidosPage.jsx';
 import PerfilPage from './pages/PerfilPage.jsx';
@@ -75,6 +76,14 @@ export default function App() {
           element={
             <RutaProtegida rolRequerido={ROL.CLIENTE}>
               <PerfilPage />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path={RUTAS.MIS_PEDIDOS}
+          element={
+            <RutaProtegida rolRequerido={ROL.CLIENTE}>
+              <MisPedidosPage />
             </RutaProtegida>
           }
         />

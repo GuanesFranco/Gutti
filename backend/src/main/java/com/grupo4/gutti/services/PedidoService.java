@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.grupo4.gutti.dtos.PaginaDTO;
 import com.grupo4.gutti.dtos.pedido.PedidoDTO;
 import com.grupo4.gutti.dtos.pedido.PedidoResponse;
 import com.grupo4.gutti.enums.TipoDeEntrega;
@@ -47,6 +48,10 @@ public class PedidoService {
         pedido.setTipoDeEntrega(datos.getTipoDeEntrega());
         pedido.setNombreCliente(datos.getNombreCliente());
         pedido.setTelefono(datos.getTelefono());
+        pedido.setDireccion(datos.getDireccion());
+        if ((pedido.getDireccion() == null || pedido.getDireccion().isBlank()) && usuario.getCliente() != null) {
+            pedido.setDireccion(usuario.getCliente().getDireccion());
+        }
         pedido.setUsuario(usuario);
         if (usuario.getCliente() != null) {
             pedido.setCliente(usuario.getCliente());
@@ -78,6 +83,28 @@ public class PedidoService {
         return resultado;
     }
 
+    public PaginaDTO<PedidoResponse> consultarPaginado(
+            TipoDeEntrega tipoDeEntrega, LocalDate desde, LocalDate hasta, int page, int size) {
+        List<PedidoResponse> todos = consultar(tipoDeEntrega, desde, hasta);
+        int inicio = Math.max(0, page * size);
+        int fin = Math.min(inicio + size, todos.size());
+        List<PedidoResponse> sublista = (inicio >= todos.size()) ? List.of() : todos.subList(inicio, fin);
+        int totalPaginas = (int) Math.ceil((double) todos.size() / size);
+        if (totalPaginas == 0) {
+            totalPaginas = 1;
+        }
+
+        return new PaginaDTO<>(sublista, page, size, todos.size(), totalPaginas);
+    }
+
+    public List<PedidoResponse> consultarMisPedidos(String email) {
+        List<PedidoResponse> resultado = new ArrayList<>();
+        for (Pedido pedido : pedidoRepository.findByUsuarioEmailOrderByFechaHoraDesc(email)) {
+            resultado.add(convertir(pedido));
+        }
+        return resultado;
+    }
+
     public Double calcularRecaudacion(TipoDeEntrega tipoDeEntrega, LocalDate desde, LocalDate hasta) {
         double recaudacion = 0;
         for (PedidoResponse pedido : consultar(tipoDeEntrega, desde, hasta)) {
@@ -100,6 +127,7 @@ public class PedidoService {
         pedido.setTipoDeEntrega(datos.getTipoDeEntrega());
         pedido.setNombreCliente(datos.getNombreCliente());
         pedido.setTelefono(datos.getTelefono());
+        pedido.setDireccion(datos.getDireccion());
         reponerStock(pedido);
         pedido.getItems().clear();
         agregarProductos(pedido, datos.getItems());
@@ -164,6 +192,7 @@ public class PedidoService {
             itemPedido.setProducto(producto);
             itemPedido.setCantidad(item.getCantidad());
             itemPedido.setPrecioUnitario(producto.getPrecio());
+            itemPedido.setGustos(item.getGustos() != null && !item.getGustos().isBlank() ? item.getGustos().trim() : null);
             itemPedido.setPedido(pedido);
             pedido.getItems().add(itemPedido);
         }
@@ -191,6 +220,7 @@ public class PedidoService {
         respuesta.setTipoDeEntrega(pedido.getTipoDeEntrega());
         respuesta.setNombreCliente(pedido.getNombreCliente());
         respuesta.setTelefono(pedido.getTelefono());
+        respuesta.setDireccion(pedido.getDireccion());
         respuesta.setTotal(pedido.calcularCostoTotal());
 
         for (ItemPedido item : pedido.getItems()) {
@@ -198,6 +228,7 @@ public class PedidoService {
             itemRespuesta.setNombreProducto(item.getProducto().getNombre());
             itemRespuesta.setCantidad(item.getCantidad());
             itemRespuesta.setSubtotal(item.calcularSubtotal());
+            itemRespuesta.setGustos(item.getGustos());
             respuesta.getItems().add(itemRespuesta);
         }
         return respuesta;
