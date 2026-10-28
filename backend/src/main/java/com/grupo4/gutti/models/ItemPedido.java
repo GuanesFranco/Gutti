@@ -31,6 +31,10 @@ public class ItemPedido {
     @Column(nullable = false)
     private Double precioUnitario;
 
+    // Gustos o sabores elegidos (ej. en helados: "Dulce de leche con brownie, Menta granizada")
+    @Column(length = 255)
+    private String gustos;
+
     // Se excluye para que Pedido e ItemPedido no se llamen entre sí en un bucle infinito.
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
