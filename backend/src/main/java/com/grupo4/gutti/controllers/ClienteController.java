@@ -11,7 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import static org.springframework.http.HttpStatus.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,7 +25,7 @@ public class ClienteController {
     private final ClienteService clienteService;
 
     @GetMapping("/mi-perfil")
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(OK)
     @Operation(summary = "Obtener el perfil del cliente actualmente autenticado")
     @ApiResponses(value = {
         @ApiResponse(
@@ -44,7 +44,7 @@ public class ClienteController {
     }
 
     @PutMapping("/mi-perfil")
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(OK)
     @Operation(summary = "Actualizar el perfil del cliente actualmente autenticado")
     @ApiResponses(value = {
         @ApiResponse(
@@ -68,7 +68,7 @@ public class ClienteController {
     }
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(OK)
     @Operation(summary = "Listar todos los clientes (Solo Administradores)")
     @ApiResponses(value = {
         @ApiResponse(
@@ -85,7 +85,7 @@ public class ClienteController {
     }
 
     @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(OK)
     @Operation(summary = "Obtener cliente por ID (Solo Administradores)")
     @ApiResponses(value = {
         @ApiResponse(
@@ -109,7 +109,7 @@ public class ClienteController {
     }
 
     @PutMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(OK)
     @Operation(summary = "Actualizar cliente por ID (Solo Administradores)")
     @ApiResponses(value = {
         @ApiResponse(
