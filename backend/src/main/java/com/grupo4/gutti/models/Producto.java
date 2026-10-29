@@ -18,6 +18,9 @@ public class Producto {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Long version;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime fechaCreacion;
@@ -29,6 +32,9 @@ public class Producto {
     private String nombre;
 
     private String descripcion;
+
+    @Column(name = "imagen_url", length = 500)
+    private String imagenUrl;
 
     @Column(nullable = false)
     private String categoria;

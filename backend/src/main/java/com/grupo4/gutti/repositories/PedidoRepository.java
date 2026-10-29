@@ -11,4 +11,6 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
     // Spring arma la consulta a partir del nombre: todos los pedidos, del más nuevo al más viejo.
     List<Pedido> findAllByOrderByFechaHoraDesc();
+
+    List<Pedido> findByUsuarioEmailOrderByFechaHoraDesc(String email);
 }

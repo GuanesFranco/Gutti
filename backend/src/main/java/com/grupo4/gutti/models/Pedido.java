@@ -41,6 +41,8 @@ public class Pedido {
 
     private String telefono;
 
+    private String direccion;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TipoDeEntrega tipoDeEntrega;

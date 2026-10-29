@@ -5,13 +5,12 @@ import com.grupo4.gutti.enums.CategoriasEnum;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-
 public class ProductoDTO {
-
-    // los getters y setters se usan con @data, se crean en tiempo de ejecución
 
     @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
@@ -24,8 +23,11 @@ public class ProductoDTO {
     private Double precio;
 
     @NotNull(message = "El stock es obligatorio")
-    @Positive(message = "El stock debe ser mayor a 0")
+    @PositiveOrZero(message = "El stock no puede ser negativo")
     private Integer stock;
 
     private String descripcion;
+
+    @Size(max = 500, message = "La URL de la imagen no puede superar los 500 caracteres")
+    private String imagenUrl;
 }

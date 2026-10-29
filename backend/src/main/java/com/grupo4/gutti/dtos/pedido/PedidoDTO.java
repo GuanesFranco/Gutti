@@ -12,11 +12,13 @@ public class PedidoDTO {
     private TipoDeEntrega tipoDeEntrega;
     private String nombreCliente;
     private String telefono;
+    private String direccion;
     private List<Item> items;
 
     @Data
     public static class Item {
         private Long productoId;
         private Integer cantidad;
+        private String gustos;
     }
 }

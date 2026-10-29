@@ -20,6 +20,7 @@ public class ClienteResponse {
     private String email;
     private String telefono;
     private String direccion;
+    private String token;
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaModificacion;
 }

@@ -105,14 +105,30 @@ class PedidoControllerTest {
     // ==========================================
 
     @Test
-    @DisplayName("GET / - Debe retornar 200 OK con la lista de pedidos")
+    @DisplayName("GET / - Debe retornar 200 OK con la página de pedidos")
     void consultar_conFiltros_retornaOkYLista() throws Exception {
         // Arrange
         PedidoResponse p1 = pedidoResponse(1L, "PENDIENTE", 3000.0, TipoDeEntrega.MOSTRADOR);
-        when(pedidoService.consultar(any(), any(), any())).thenReturn(List.of(p1));
+        com.grupo4.gutti.dtos.PaginaDTO<PedidoResponse> pagina = new com.grupo4.gutti.dtos.PaginaDTO<>(
+                List.of(p1), 0, 10, 1L, 1);
+        when(pedidoService.consultarPaginado(any(), any(), any(), eq(0), eq(10))).thenReturn(pagina);
 
         // Act & Assert
         mockMvc.perform(get("/api/v1/pedidos"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(1L))
+                .andExpect(jsonPath("$.content[0].total").value(3000.0));
+    }
+
+    @Test
+    @DisplayName("GET /mis-pedidos - Debe retornar 200 OK con la lista de pedidos del usuario autenticado")
+    void consultarMisPedidos_retornaOkYLista() throws Exception {
+        // Arrange
+        PedidoResponse p1 = pedidoResponse(1L, "PENDIENTE", 3000.0, TipoDeEntrega.MOSTRADOR);
+        when(pedidoService.consultarMisPedidos("cliente@gutti.com")).thenReturn(List.of(p1));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/pedidos/mis-pedidos").principal(auth))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1L))
                 .andExpect(jsonPath("$[0].total").value(3000.0));

@@ -1,6 +1,6 @@
 package com.grupo4.gutti.exceptions;
 
-import org.springframework.http.HttpStatus;
+import static org.springframework.http.HttpStatus.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -24,7 +24,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<String> handleBadCredentialsException(BadCredentialsException ex) {
         // Criterio de aceptación: Mensaje genérico de error
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales inválidas. Verifica tu email y contraseña.");
+        return ResponseEntity.status(UNAUTHORIZED).body("Credenciales inválidas. Verifica tu email y contraseña.");
     }
 
     /** Errores de validación de los DTOs (@NotNull, @Positive, etc.): se devuelven todos los mensajes juntos. */
@@ -39,7 +39,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(StockInsuficienteException.class)
     public ResponseEntity<String> handleStockInsuficienteException(StockInsuficienteException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+        return ResponseEntity.status(CONFLICT).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<String> handleOptimisticLock(org.springframework.orm.ObjectOptimisticLockingFailureException ex) {
+        return ResponseEntity.status(CONFLICT)
+                .body("El stock fue modificado por otra compra en simultáneo. Por favor, reintentá tu pedido.");
     }
 
     // Errores con código propio (404 no existe, 409 conflicto): devuelve ese código y el mensaje.

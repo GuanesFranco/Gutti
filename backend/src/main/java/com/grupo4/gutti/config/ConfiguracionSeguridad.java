@@ -56,8 +56,9 @@ public class ConfiguracionSeguridad {
                 // Gestión de clientes
                 .requestMatchers("/api/v1/clientes/mi-perfil").hasAnyRole("ADMIN", "CLIENTE")
                 .requestMatchers("/api/v1/clientes/**").hasRole("ADMIN")
-                // Gestión de pedidos: creación para clientes y admins, resto solo admins
+                // Gestión de pedidos: creación y consulta propia para clientes y admins, resto solo admins
                 .requestMatchers(HttpMethod.POST, "/api/v1/pedidos").hasAnyRole("ADMIN", "CLIENTE")
+                .requestMatchers(HttpMethod.GET, "/api/v1/pedidos/mis-pedidos").hasAnyRole("ADMIN", "CLIENTE")
                 .requestMatchers("/api/v1/pedidos/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET,"/api/v1/productos/**").permitAll()
                 .requestMatchers("/api/v1/productos/**").hasRole("ADMIN")

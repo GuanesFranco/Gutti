@@ -3,8 +3,8 @@ package com.grupo4.gutti.controllers;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.grupo4.gutti.dtos.PaginaDTO;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,12 +14,13 @@ import com.grupo4.gutti.enums.TipoDeEntrega;
 import com.grupo4.gutti.services.PedidoService;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+
+import static org.springframework.http.HttpStatus.*;
 
 @RestController
 @RequestMapping("/api/v1/pedidos")
@@ -29,7 +30,7 @@ public class PedidoController {
     private final PedidoService pedidoService;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
+    @ResponseStatus(CREATED)
     @Operation(summary = "Registrar un nuevo pedido")
     @ApiResponses(value = {
         @ApiResponse(
@@ -52,33 +53,27 @@ public class PedidoController {
         return pedidoService.registrar(datos, usuarioLogueado.getName());
     }
 
+    @GetMapping("/mis-pedidos")
+    @ResponseStatus(OK)
+    @Operation(summary = "Consultar el historial de pedidos del cliente autenticado")
+    public List<PedidoResponse> consultarMisPedidos(Authentication usuarioLogueado) {
+        return pedidoService.consultarMisPedidos(usuarioLogueado.getName());
+    }
+
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
-    @Operation(summary = "Consultar pedidos con filtros opcionales")
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200", 
-            description = "Pedidos recuperados exitosamente",
-            content = @Content(
-                mediaType = "application/json", 
-                array = @ArraySchema(schema = @Schema(implementation = PedidoResponse.class))
-            )
-        ),
-        @ApiResponse(
-            responseCode = "400", 
-            description = "Parámetros de filtrado inválidos",
-            content = @Content(mediaType = "application/json", schema = @Schema(type = "string", example = "Los parámetros de fecha u orden son inválidos."))
-        )
-    })
-    public List<PedidoResponse> consultar(
+    @ResponseStatus(OK)
+    @Operation(summary = "Consultar pedidos con filtros opcionales y paginación")
+    public PaginaDTO<PedidoResponse> consultar(
             @RequestParam(required = false) TipoDeEntrega tipoDeEntrega,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
-        return pedidoService.consultar(tipoDeEntrega, desde, hasta);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return pedidoService.consultarPaginado(tipoDeEntrega, desde, hasta, page, size);
     }
 
     @GetMapping("/recaudacion")
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(OK)
     @Operation(summary = "Calcular recaudación total con filtros opcionales")
     @ApiResponses(value = {
         @ApiResponse(
@@ -100,7 +95,7 @@ public class PedidoController {
     }
 
    @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(OK)
     @Operation(summary = "Obtener un pedido por su ID")
     @ApiResponses(value = {
         @ApiResponse(
@@ -124,7 +119,7 @@ public class PedidoController {
     }
 
     @PutMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(OK)
     @Operation(summary = "Modificar un pedido existente")
     @ApiResponses(value = {
         @ApiResponse(
@@ -148,7 +143,7 @@ public class PedidoController {
     }
 
    @PatchMapping("/{id}/estado")
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(OK)
     @Operation(summary = "Cambiar el estado de un pedido")
     @ApiResponses(value = {
         @ApiResponse(
@@ -172,7 +167,7 @@ public class PedidoController {
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(NO_CONTENT)
     @Operation(summary = "Eliminar un pedido")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Pedido eliminado exitosamente"),
