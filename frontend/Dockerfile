@@ -8,6 +8,9 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
 # Etapa 2: Servidor web de producción con Nginx
 FROM nginx:1.27-alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf.template
