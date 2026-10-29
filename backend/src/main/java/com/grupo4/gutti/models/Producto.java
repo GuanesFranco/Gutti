@@ -19,6 +19,7 @@ public class Producto {
     private Long id;
 
     @Version
+    @Column(columnDefinition = "bigint default 0")
     private Long version;
 
     @CreationTimestamp
