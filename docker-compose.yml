@@ -48,6 +48,8 @@ services:
     container_name: gutti_frontend_container
     ports:
       - "127.0.0.1:5173:80"
+    environment:
+      - BACKEND_URL=http://backend:8080
     depends_on:
       - backend
     networks:
@@ -58,4 +60,3 @@ volumes:
 
 networks:
   gutti_network:
-    driver: bridge
